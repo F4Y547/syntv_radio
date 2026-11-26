@@ -11,6 +11,7 @@ const GlobeMap = dynamic(() => import("@/components/explore/globe-map").then((m)
 });
 import type { Station } from "@/types/station";
 import { StationCard } from "./station-card";
+import { StationGridSkeleton } from "./station-card-skeleton";
 import { usePlayer } from "@/components/player/player-provider";
 
 interface Filters {
@@ -340,11 +341,7 @@ export function StationBrowser() {
         )}
 
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Loading stations">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-[168px] animate-pulse rounded-[var(--card-radius)] border border-border bg-surface" />
-            ))}
-          </div>
+          <StationGridSkeleton count={6} />
         ) : stations.length > 0 ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

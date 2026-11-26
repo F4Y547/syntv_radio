@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Compass, Search, BarChart3, ListMusic, Globe2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Heart, Compass, Search, BarChart3, ListMusic, Globe2, Menu, X } from "lucide-react";
 import { PlayerProvider } from "@/components/player/player-provider";
 import { PlayerBar } from "@/components/player/player-bar";
 import { ThemeToggle } from "./theme-toggle";
@@ -12,88 +14,140 @@ import { InstallPrompt } from "./install-prompt";
 import { LocaleProvider, useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "./language-toggle";
 
+const navItems = [
+  { href: "/", icon: Compass, key: "discover" },
+  { href: "/#favorites", icon: Heart, key: "favorites" },
+  { href: "/stats", icon: BarChart3, key: "stats" },
+  { href: "/collections", icon: ListMusic, key: "collections" },
+  { href: "/explore", icon: Globe2, key: "explore" },
+] as const;
+
 function ShellContent({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
+  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuPathname, setMenuPathname] = useState(pathname);
+
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
+    setMobileMenuOpen(false);
+  }
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
+  const openSearch = () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+
   return (
-      <div className="relative min-h-screen overflow-x-hidden pb-[calc(var(--player-height)+1.5rem)]">
+      <div className="relative min-h-screen overflow-x-hidden pb-[calc(var(--player-height)+env(safe-area-inset-bottom,0px)+1rem)]">
         <div
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,color-mix(in_srgb,var(--color-primary)_14%,transparent),transparent_60%),radial-gradient(ellipse_50%_40%_at_85%_0%,color-mix(in_srgb,var(--color-live)_8%,transparent),transparent_55%)]"
         />
         <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 opacity-[0.35] [background-image:linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]" />
-        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/60 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/50">
-          <div className="container-page flex h-16 items-center justify-between gap-4">
-            <Link href="/" className="group inline-flex items-center transition-opacity hover:opacity-95" aria-label="SYNTV RADIO home">
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/55">
+          <div className="container-page flex h-16 items-center justify-between gap-3">
+            <Link href="/" className="group inline-flex w-fit shrink-0 items-center transition-opacity hover:opacity-95" aria-label="SYNTV RADIO home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo.svg"
+                src="/syntv-radio-logo.svg?v=2"
                 alt="SYNTV RADIO"
-                className="block h-10 w-auto sm:h-11 [.light_&]:hidden"
-                width="760"
+                className="block h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:hidden"
+                width="470"
                 height="180"
                 decoding="async"
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo-light.svg"
+                src="/syntv-radio-logo-light.svg?v=2"
                 alt=""
                 aria-hidden="true"
-                className="hidden h-10 w-auto sm:h-11 [.light_&]:block"
-                width="760"
+                className="hidden h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:block"
+                width="470"
                 height="180"
                 decoding="async"
               />
             </Link>
-            <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-2">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Compass size={16} aria-hidden="true" />
-                <span className="hidden sm:inline">{t("discover")}</span>
-              </Link>
-              <Link
-                href="/#favorites"
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Heart size={16} aria-hidden="true" />
-                <span className="hidden sm:inline">{t("favorites")}</span>
-              </Link>
-              <Link
-                href="/stats"
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <BarChart3 size={16} aria-hidden="true" />
-                <span className="hidden sm:inline">{t("stats")}</span>
-              </Link>
-              <Link
-                href="/collections"
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <ListMusic size={16} aria-hidden="true" />
-                <span className="hidden sm:inline">{t("collections")}</span>
-              </Link>
-              <Link
-                href="/explore"
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Globe2 size={16} aria-hidden="true" />
-                <span className="hidden sm:inline">{t("explore")}</span>
-              </Link>
+
+            <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+              {navItems.map(({ href, icon: Icon, key }) => (
+                <Link
+                  key={key}
+                  href={href}
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{t(key)}</span>
+                </Link>
+              ))}
               <button
                 type="button"
-                onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+                onClick={openSearch}
                 className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={t("openSearch")}
               >
                 <Search size={16} aria-hidden="true" />
-                <span className="hidden md:inline">{t("search")}</span>
-                <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground lg:inline">Ctrl K</kbd>
+                <span className="hidden lg:inline">{t("search")}</span>
+                <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground xl:inline">Ctrl K</kbd>
               </button>
               <LanguageToggle />
               <ThemeToggle />
             </nav>
+
+            <div className="flex items-center gap-1 md:hidden">
+              <button
+                type="button"
+                onClick={openSearch}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={t("openSearch")}
+              >
+                <Search size={18} aria-hidden="true" />
+              </button>
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((v) => !v)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-foreground/[0.03] text-foreground transition hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-nav"
+              >
+                {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+              </button>
+            </div>
           </div>
+
+          {mobileMenuOpen && (
+            <div id="mobile-nav" className="border-t border-border/60 bg-background/95 backdrop-blur-2xl md:hidden">
+              <nav aria-label="Mobile primary" className="container-page flex flex-col gap-1 py-3">
+                {navItems.map(({ href, icon: Icon, key }) => (
+                  <Link
+                    key={key}
+                    href={href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    <span>{t(key)}</span>
+                  </Link>
+                ))}
+                <div className="mt-2 flex items-center justify-between border-t border-border/60 px-3 pt-3">
+                  <span className="text-sm text-muted-foreground">{t("language")}</span>
+                  <LanguageToggle />
+                </div>
+              </nav>
+            </div>
+          )}
         </header>
         <main className="container-page py-8 sm:py-10">{children}</main>
         <PlayerBar />

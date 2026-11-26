@@ -1,23 +1,25 @@
 /* === SEMANTIC TOKENS === */
 :root {
   /* Surface */
-  --color-background: #080b11;
-  --color-background-subtle: #0d121b;
-  --color-surface: rgb(18 24 35 / 0.72);
-  --color-surface-solid: #121823;
-  --color-surface-elevated: #182131;
-  --color-surface-overlay: rgb(10 14 21 / 0.78);
-  --color-foreground: #f4f7fb;
-  --color-foreground-muted: #c3cedd;
-  --color-muted: #1b2433;
-  --color-muted-foreground: #8d9bb0;
+  --color-background: #080d13;
+  --color-background-subtle: #0c141c;
+  --color-surface: rgb(16 25 35 / 0.72);
+  --color-surface-solid: #101923;
+  --color-surface-elevated: #16232f;
+  --color-surface-overlay: rgb(8 13 19 / 0.82);
+  --color-foreground: #ffffff;
+  --color-foreground-muted: #c3ced8;
+  --color-muted: #16232f;
+  --color-muted-foreground: #a7b4c0;
 
   /* Brand */
   --color-primary: #22c5e5;
   --color-primary-hover: #67dff3;
-  --color-primary-active: var(--color-cyan-500);
+  --color-primary-active: #087f9b;
   --color-primary-foreground: #05181d;
   --color-primary-soft: rgb(34 197 229 / 0.12);
+  --color-secondary: #087f9b;
+  --color-secondary-soft: rgb(8 127 155 / 0.14);
 
   /* Live / Accent */
   --color-live: var(--color-amber-400);
@@ -30,8 +32,8 @@
   --color-error-soft: rgb(251 113 133 / 0.12);
 
   /* Border / Focus */
-  --color-border: rgb(148 160 178 / 0.14);
-  --color-border-strong: rgb(148 160 178 / 0.28);
+  --color-border: rgb(34 197 229 / 0.15);
+  --color-border-strong: rgb(34 197 229 / 0.28);
   --color-ring: var(--color-primary);
 
   /* Typography */

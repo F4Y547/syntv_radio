@@ -22,18 +22,18 @@
   --input-padding-y: 0.8125rem;
 
   /* Card */
-  --card-bg: linear-gradient(180deg, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.02));
+  --card-bg: linear-gradient(180deg, rgb(22 35 47 / 0.72), rgb(16 25 35 / 0.88));
   --card-bg-solid: var(--color-surface-solid);
-  --card-border: rgb(148 160 178 / 0.12);
-  --card-border-hover: color-mix(in srgb, var(--color-primary) 28%, transparent);
-  --card-radius: var(--radius-xl);
-  --card-shadow: var(--shadow-sm);
-  --card-shadow-hover: var(--shadow-md);
+  --card-border: rgb(34 197 229 / 0.14);
+  --card-border-hover: rgb(34 197 229 / 0.45);
+  --card-radius: 1rem;
+  --card-shadow: 0 4px 24px rgb(0 0 0 / 0.18);
+  --card-shadow-hover: 0 12px 40px rgb(0 0 0 / 0.28), 0 0 0 1px rgb(34 197 229 / 0.08);
 
   /* Player */
-  --player-bg: rgb(8 11 17 / 0.72);
-  --player-border: rgb(148 160 178 / 0.12);
-  --player-shadow: 0 -12px 40px rgb(0 0 0 / 0.28);
+  --player-bg: rgb(8 13 19 / 0.78);
+  --player-border: rgb(34 197 229 / 0.14);
+  --player-shadow: 0 -16px 48px rgb(0 0 0 / 0.35);
   --player-accent: var(--color-primary);
   --player-live: var(--color-live);
 
