@@ -2,6 +2,15 @@
   "name": "syntv-radio",
   "version": "0.1.0",
   "private": true,
+  "description": "SYNTV RADIO — premium world radio web app for discovering and streaming live stations worldwide.",
+  "homepage": "https://syntv.online",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/F4Y547/syntv_radio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/F4Y547/syntv_radio/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
