@@ -12,6 +12,13 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/.playwright-mcp/
+
+# local screenshots/temp
+/atlas-radio-*.png
+/tmp-*.png
 
 # next.js
 /.next/

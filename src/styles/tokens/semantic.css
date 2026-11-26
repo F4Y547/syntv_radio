@@ -1,0 +1,81 @@
+/* === SEMANTIC TOKENS === */
+:root {
+  /* Surface */
+  --color-background: #080b11;
+  --color-background-subtle: #0d121b;
+  --color-surface: rgb(18 24 35 / 0.72);
+  --color-surface-solid: #121823;
+  --color-surface-elevated: #182131;
+  --color-surface-overlay: rgb(10 14 21 / 0.78);
+  --color-foreground: #f4f7fb;
+  --color-foreground-muted: #c3cedd;
+  --color-muted: #1b2433;
+  --color-muted-foreground: #8d9bb0;
+
+  /* Brand */
+  --color-primary: #22c5e5;
+  --color-primary-hover: #67dff3;
+  --color-primary-active: var(--color-cyan-500);
+  --color-primary-foreground: #05181d;
+  --color-primary-soft: rgb(34 197 229 / 0.12);
+
+  /* Live / Accent */
+  --color-live: var(--color-amber-400);
+  --color-live-soft: rgb(251 191 36 / 0.14);
+
+  /* Status */
+  --color-success: var(--color-green-400);
+  --color-warning: var(--color-amber-400);
+  --color-error: var(--color-red-400);
+  --color-error-soft: rgb(251 113 133 / 0.12);
+
+  /* Border / Focus */
+  --color-border: rgb(148 160 178 / 0.14);
+  --color-border-strong: rgb(148 160 178 / 0.28);
+  --color-ring: var(--color-primary);
+
+  /* Typography */
+  --font-body: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  /* Layout */
+  --spacing-page-x: var(--space-4);
+  --spacing-page-y: var(--space-6);
+  --spacing-section: var(--space-12);
+
+  /* Interaction */
+  --ring-width: 2px;
+  --ring-offset: 2px;
+  --opacity-disabled: 0.5;
+  --transition-colors: color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+.light {
+  --color-background: #f4f7fb;
+  --color-background-subtle: #eaf0f7;
+  --color-surface: rgb(255 255 255 / 0.78);
+  --color-surface-solid: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-overlay: rgb(244 247 251 / 0.86);
+  --color-foreground: #101828;
+  --color-foreground-muted: #33465f;
+  --color-muted: #e4ebf3;
+  --color-muted-foreground: #62748a;
+  --color-primary: var(--color-cyan-600);
+  --color-primary-hover: var(--color-cyan-500);
+  --color-primary-active: var(--color-cyan-700);
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: rgb(13 148 173 / 0.1);
+  --color-live-soft: rgb(245 158 11 / 0.12);
+  --color-error-soft: rgb(244 63 94 / 0.08);
+  --color-border: rgb(51 70 95 / 0.12);
+  --color-border-strong: rgb(51 70 95 / 0.22);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 0 rgb(255 255 255 / 0.8) inset;
+  --shadow-md: 0 12px 30px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 24px 60px rgb(15 23 42 / 0.12);
+  --shadow-glow: 0 0 0 1px rgb(13 148 173 / 0.18), 0 12px 32px rgb(13 148 173 / 0.1);
+}

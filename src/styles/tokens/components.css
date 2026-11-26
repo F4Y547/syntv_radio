@@ -1,0 +1,62 @@
+/* === COMPONENT TOKENS === */
+:root {
+  /* Button */
+  --button-radius: var(--radius-full);
+  --button-font-weight: var(--font-weight-semibold);
+  --button-primary-bg: var(--color-primary);
+  --button-primary-fg: var(--color-primary-foreground);
+  --button-primary-hover: var(--color-primary-hover);
+  --button-secondary-bg: rgb(255 255 255 / 0.04);
+  --button-secondary-fg: var(--color-foreground);
+  --button-secondary-border: var(--color-border);
+  --button-secondary-hover: rgb(255 255 255 / 0.08);
+
+  /* Input */
+  --input-bg: rgb(255 255 255 / 0.035);
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-primary);
+  --input-fg: var(--color-foreground);
+  --input-placeholder: var(--color-muted-foreground);
+  --input-radius: var(--radius-lg);
+  --input-padding-x: var(--space-4);
+  --input-padding-y: 0.8125rem;
+
+  /* Card */
+  --card-bg: linear-gradient(180deg, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.02));
+  --card-bg-solid: var(--color-surface-solid);
+  --card-border: rgb(148 160 178 / 0.12);
+  --card-border-hover: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  --card-radius: var(--radius-xl);
+  --card-shadow: var(--shadow-sm);
+  --card-shadow-hover: var(--shadow-md);
+
+  /* Player */
+  --player-bg: rgb(8 11 17 / 0.72);
+  --player-border: rgb(148 160 178 / 0.12);
+  --player-shadow: 0 -12px 40px rgb(0 0 0 / 0.28);
+  --player-accent: var(--color-primary);
+  --player-live: var(--color-live);
+
+  /* Chip */
+  --chip-bg: rgb(255 255 255 / 0.04);
+  --chip-bg-active: var(--color-primary-soft);
+  --chip-fg: var(--color-foreground-muted);
+  --chip-fg-active: var(--color-primary);
+  --chip-border: rgb(148 160 178 / 0.14);
+  --chip-border-active: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.light {
+  --button-secondary-bg: rgb(16 24 40 / 0.02);
+  --button-secondary-hover: rgb(16 24 40 / 0.05);
+  --input-bg: rgb(255 255 255 / 0.8);
+  --card-bg: linear-gradient(180deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.72));
+  --card-border: rgb(51 70 95 / 0.1);
+  --card-border-hover: rgb(13 148 173 / 0.28);
+  --player-bg: rgb(244 247 251 / 0.78);
+  --player-border: rgb(51 70 95 / 0.1);
+  --player-shadow: 0 -12px 40px rgb(15 23 42 / 0.08);
+  --chip-bg: rgb(16 24 40 / 0.03);
+  --chip-border: rgb(51 70 95 / 0.1);
+  --chip-border-active: rgb(13 148 173 / 0.24);
+}
