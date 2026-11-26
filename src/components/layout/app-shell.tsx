@@ -60,7 +60,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
             <Link href="/" className="group inline-flex w-fit shrink-0 items-center transition-opacity hover:opacity-95" aria-label="SYNTV RADIO home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo.svg?v=2"
+                src="/syntv-radio-logo.svg?v=3"
                 alt="SYNTV RADIO"
                 className="block h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:hidden"
                 width="470"
@@ -69,7 +69,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo-light.svg?v=2"
+                src="/syntv-radio-logo-light.svg?v=3"
                 alt=""
                 aria-hidden="true"
                 className="hidden h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:block"
