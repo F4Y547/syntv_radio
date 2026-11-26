@@ -63,7 +63,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                 src="/syntv-radio-logo.svg?v=3"
                 alt="SYNTV RADIO"
                 className="block h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:hidden"
-                width="470"
+                width="420"
                 height="180"
                 decoding="async"
               />
@@ -73,7 +73,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                 alt=""
                 aria-hidden="true"
                 className="hidden h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:block"
-                width="470"
+                width="420"
                 height="180"
                 decoding="async"
               />
