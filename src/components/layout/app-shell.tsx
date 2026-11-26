@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Compass, Search, BarChart3, ListMusic, Globe2, Menu, X } from "lucide-react";
+import { Heart, Compass, Search, ListMusic, Globe2, Menu, X, Radio } from "lucide-react";
 import { PlayerProvider } from "@/components/player/player-provider";
 import { PlayerBar } from "@/components/player/player-bar";
 import { ThemeToggle } from "./theme-toggle";
@@ -16,10 +16,10 @@ import { LanguageToggle } from "./language-toggle";
 
 const navItems = [
   { href: "/", icon: Compass, key: "discover" },
-  { href: "/#favorites", icon: Heart, key: "favorites" },
-  { href: "/stats", icon: BarChart3, key: "stats" },
-  { href: "/collections", icon: ListMusic, key: "collections" },
+  { href: "/stations", icon: Radio, key: "stations" },
   { href: "/explore", icon: Globe2, key: "explore" },
+  { href: "/#favorites", icon: Heart, key: "favorites" },
+  { href: "/collections", icon: ListMusic, key: "collections" },
 ] as const;
 
 function ShellContent({ children }: { children: React.ReactNode }) {
@@ -150,6 +150,40 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           )}
         </header>
         <main className="container-page py-8 sm:py-10">{children}</main>
+        <footer className="border-t border-border/60 py-10 text-sm text-muted-foreground">
+          <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="font-display text-base font-semibold text-foreground">SYNTV RADIO</p>
+              <p className="mt-2 max-w-xs">Listen to live online radio stations worldwide. Discover stations by country, genre, and name.</p>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Explore</p>
+              <ul className="mt-2 space-y-1.5">
+                <li><Link href="/stations" className="hover:text-foreground">Station directory</Link></li>
+                <li><Link href="/explore" className="hover:text-foreground">World globe</Link></li>
+                <li><Link href="/#favorites" className="hover:text-foreground">Favorites</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Popular countries</p>
+              <ul className="mt-2 space-y-1.5">
+                <li><Link href="/country/united-states" className="hover:text-foreground">United States</Link></li>
+                <li><Link href="/country/united-kingdom" className="hover:text-foreground">United Kingdom</Link></li>
+                <li><Link href="/country/bangladesh" className="hover:text-foreground">Bangladesh</Link></li>
+                <li><Link href="/country/india" className="hover:text-foreground">India</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Popular genres</p>
+              <ul className="mt-2 space-y-1.5">
+                <li><Link href="/genre/pop" className="hover:text-foreground">Pop</Link></li>
+                <li><Link href="/genre/rock" className="hover:text-foreground">Rock</Link></li>
+                <li><Link href="/genre/news" className="hover:text-foreground">News</Link></li>
+                <li><Link href="/genre/classical" className="hover:text-foreground">Classical</Link></li>
+              </ul>
+            </div>
+          </div>
+        </footer>
         <PlayerBar />
         <CommandPalette />
         <KeyboardShortcuts />

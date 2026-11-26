@@ -11,6 +11,7 @@ const dictionaries: Record<Locale, Dict> = {
   en: {
     tagline: "Free world radio",
     discover: "Discover",
+    stations: "Stations",
     favorites: "Favorites",
     stats: "Stats",
     collections: "Collections",
@@ -32,7 +33,7 @@ const dictionaries: Record<Locale, Dict> = {
     worldExplorer: "World explorer",
     exploreByCountry: "Explore by country",
     exploreDesc: "Jump into live radio by region. Pick a country to browse stations.",
-    stations: "stations",
+    stationsCount: "stations",
     youreOffline: "You're offline",
     offlineDesc: "SYNTV RADIO needs an internet connection to load live station streams. Check your connection and try again.",
     goToDiscover: "Go to Discover",
@@ -59,6 +60,7 @@ const dictionaries: Record<Locale, Dict> = {
   es: {
     tagline: "Radio mundial gratis",
     discover: "Descubrir",
+    stations: "Estaciones",
     favorites: "Favoritos",
     stats: "Estadísticas",
     collections: "Colecciones",
@@ -80,7 +82,7 @@ const dictionaries: Record<Locale, Dict> = {
     worldExplorer: "Explorador mundial",
     exploreByCountry: "Explorar por país",
     exploreDesc: "Entra a la radio en vivo por región. Elige un país para explorar estaciones.",
-    stations: "estaciones",
+    stationsCount: "estaciones",
     youreOffline: "Estás sin conexión",
     offlineDesc: "SYNTV RADIO necesita conexión a internet para cargar transmisiones en vivo. Revisa tu conexión e inténtalo de nuevo.",
     goToDiscover: "Ir a Descubrir",

@@ -27,26 +27,28 @@ export const viewport: Viewport = {
   colorScheme: "dark light",
 };
 
+const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const bingVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "SYNTV RADIO — Free World Radio",
+    default: "SYNTV RADIO — Listen to Live Online Radio Stations Worldwide",
     template: "%s | SYNTV RADIO",
   },
   description:
-    "Listen to free live radio stations from around the world on SYNTV RADIO. Discover global music, news, and talk with fast search, favorites, 3D globe exploration, and resilient playback.",
+    "Discover and listen to live online radio stations from around the world. Explore radio stations by country, music genre, and category on SYNTV RADIO.",
   applicationName: "SYNTV RADIO",
   keywords: [
     "SYNTV RADIO",
-    "world radio",
     "online radio",
-    "live radio",
-    "free radio stations",
-    "internet radio",
-    "global radio",
+    "live radio stations",
     "listen to radio online",
-    "radio by country",
-    "radio by genre",
+    "internet radio directory",
+    "radio stations by country",
+    "radio stations by genre",
+    "international radio stations",
+    "free radio",
   ],
   authors: [{ name: "SYNTV RADIO", url: siteUrl }],
   creator: "SYNTV RADIO",
@@ -60,23 +62,23 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/",
     siteName: "SYNTV RADIO",
-    title: "SYNTV RADIO — Free World Radio",
+    title: "SYNTV RADIO — Listen to Live Online Radio Stations Worldwide",
     description:
-      "Discover and listen to free live radio stations from around the world. Search by country, genre, and name with a premium 3D globe experience.",
+      "Discover and listen to live online radio stations from around the world. Explore stations by country, genre, and category.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "SYNTV RADIO — Free World Radio",
+        alt: "SYNTV RADIO — Listen to Live Online Radio Stations Worldwide",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SYNTV RADIO — Free World Radio",
+    title: "SYNTV RADIO — Listen to Live Online Radio Stations Worldwide",
     description:
-      "Listen to free live radio stations worldwide. Search, explore by country, save favorites, and play instantly.",
+      "Discover and listen to live online radio stations from around the world on SYNTV RADIO.",
     images: ["/opengraph-image"],
   },
   robots: {
@@ -89,6 +91,10 @@ export const metadata: Metadata = {
       "max-snippet": -1,
       "max-video-preview": -1,
     },
+  },
+  verification: {
+    ...(googleVerification ? { google: googleVerification } : {}),
+    ...(bingVerification ? { other: { "msvalidate.01": bingVerification } } : {}),
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],

@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/offline"],
+        disallow: ["/api/"],
       },
     ],
     sitemap: "https://syntv.online/sitemap.xml",
