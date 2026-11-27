@@ -24,6 +24,8 @@
     "db:bootstrap-owner": "node scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
+    "@neon/config": "^1.14.8",
+    "@neon/env": "^2.1.11",
     "@prisma/client": "^6.19.2",
     "@vercel/analytics": "^2.0.1",
     "ioredis": "^6.1.0",
