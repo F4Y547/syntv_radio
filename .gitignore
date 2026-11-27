@@ -52,3 +52,5 @@ next-env.d.ts
 # local admin data fallback
 /.data/
 .neon
+
+opencode.json

@@ -1,7 +1,7 @@
 import { getPrisma, hasDatabase } from "@/lib/db";
-import type { Prisma, SubmissionStatus } from "@prisma/client";
+import type { ContactPriority, Prisma, SubmissionStatus } from "@prisma/client";
 
-export type { SubmissionStatus };
+export type { SubmissionStatus, ContactPriority };
 
 export async function recordContactSubmission(input: {
   name: string;
@@ -11,13 +11,15 @@ export async function recordContactSubmission(input: {
   message: string;
   ip?: string | null;
   userAgent?: string | null;
-}): Promise<void> {
+  delivery?: string;
+}): Promise<{ id: string } | null> {
   if (!hasDatabase()) {
     console.warn("[admin] DATABASE_URL not configured; contact submission not persisted to admin DB");
-    return;
+    return null;
   }
   const prisma = getPrisma();
-  await prisma.contactSubmission.create({
+  const delivery = input.delivery ?? "accepted";
+  const row = await prisma.contactSubmission.create({
     data: {
       name: input.name,
       email: input.email,
@@ -26,10 +28,25 @@ export async function recordContactSubmission(input: {
       message: input.message,
       ip: input.ip ?? null,
       userAgent: input.userAgent?.slice(0, 500) ?? null,
-      status: "new",
-      delivery: "accepted",
+      status: "NEW",
+      delivery,
+      activities: {
+        create: {
+          type: "received",
+          detail: { delivery },
+        },
+      },
     },
+    select: { id: true },
   });
+  return row;
+}
+
+export async function updateContactSubmissionDelivery(id: string, delivery: string, detail?: Record<string, unknown>) {
+  if (!hasDatabase()) return;
+  const prisma = getPrisma();
+  await prisma.contactSubmission.update({ where: { id }, data: { delivery } });
+  await prisma.contactActivity.create({ data: { submissionId: id, type: "delivery_updated", detail: { delivery, ...detail } as Prisma.InputJsonValue } }).catch(() => {});
 }
 
 export async function listContactSubmissions(limit = 100) {

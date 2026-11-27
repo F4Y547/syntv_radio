@@ -150,6 +150,29 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
       }
     };
 
+    let submissionId: string | null = null;
+    try {
+      const saved = await recordContactSubmission({
+        name: contact.name,
+        email: contact.email,
+        topic: contact.topic,
+        station: contact.station,
+        message: contact.message,
+        ip,
+        userAgent: request.headers.get("user-agent"),
+        delivery: "pending_notification",
+      });
+      submissionId = saved?.id ?? null;
+    } catch (err) {
+      console.error("[contact] failed to persist submission before delivery", err);
+      await releaseReservation();
+      return json(
+        { success: false, error: "The message could not be saved. Please try again later.", code: "persistence_failed" },
+        503,
+        rateHeaders,
+      );
+    }
+
     try {
       await deliverContact(config, contact, idempotencyKey, {
         fetchImpl: options.fetchImpl,
@@ -157,9 +180,15 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
         now: options.now,
       });
     } catch (error) {
-      await releaseReservation();
+      if (submissionId) {
+        try {
+          const { updateContactSubmissionDelivery } = await import("../admin/store");
+          await updateContactSubmissionDelivery(submissionId, "notification_failed", { reason: "provider_error" });
+        } catch { /* keep submission */ }
+      } else {
+        await releaseReservation();
+      }
       if (error instanceof ContactDeliveryError) {
-        // Provider identity is intentionally omitted from the client response.
         console.warn("[contact] delivery failed:", error.provider);
       } else {
         console.warn("[contact] delivery failed: unknown error");
@@ -167,24 +196,23 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
       return json(
         {
           success: false,
-          error: "The message could not be delivered. Please try again later.",
-          code: "delivery_failed",
+          error: submissionId
+            ? "Your message was saved, but the notification could not be delivered. Our team can still review it in the admin dashboard."
+            : "The message could not be delivered. Please try again later.",
+          code: submissionId ? "delivery_failed_submission_saved" : "delivery_failed",
         },
         502,
         rateHeaders,
       );
     }
 
-    try {
-      await recordContactSubmission({
-        name: contact.name,
-        email: contact.email,
-        topic: contact.topic,
-        station: contact.station,
-        message: contact.message,
-      });
-    } catch (err) {
-      console.error("[contact] submission accepted but failed to persist admin record", err);
+    if (submissionId) {
+      try {
+        const { updateContactSubmissionDelivery } = await import("../admin/store");
+        await updateContactSubmissionDelivery(submissionId, "notified");
+      } catch (err) {
+        console.error("[contact] delivery succeeded but failed to update submission delivery status", err);
+      }
     }
     return json({ success: true }, 200, rateHeaders);
   };

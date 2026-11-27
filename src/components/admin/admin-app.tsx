@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ContactsAdmin } from "./contacts-admin";
 
 type Role = "owner" | "administrator" | "editor";
 interface User { id: string; email: string; name: string | null; role: Role; csrfToken?: string }
-type Tab = "overview" | "stations" | "countries" | "genres" | "contacts" | "stream-health" | "seo" | "ads" | "audit" | "users" | "listeners";
+export type Tab = "overview" | "stations" | "countries" | "genres" | "contacts" | "stream-health" | "seo" | "ads" | "audit" | "users" | "listeners";
 
 interface ApiResult<T = unknown> { res: Response; json: T | null }
 
@@ -28,13 +29,14 @@ const btnCls = "rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-prima
 const btn2Cls = "rounded-lg border border-border px-3 py-2 text-sm text-foreground-muted hover:text-foreground disabled:opacity-50";
 
 let _csrfToken = "";
-export function AdminApp() {
+export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab } = {}) {
   const [user, setUser] = useState<User | null>(null);
   const [csrfToken, setCsrfTokenState] = useState<string>("");
   const setCsrfToken = (t: string) => { _csrfToken = t; setCsrfTokenState(t); };
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [error] = useState<string | null>(null);
+  const [unreadContacts, setUnreadContacts] = useState(0);
 
   const refreshMe = useCallback(async () => {
     setLoading(true);
@@ -46,6 +48,18 @@ export function AdminApp() {
   }, []);
 
   useEffect(() => { (async () => { await refreshMe(); })(); }, [refreshMe]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const loadUnread = async () => {
+      const { res, json } = await api<{ ok?: boolean; stats?: { unread?: number } }>("/api/admin/contacts?limit=1&stats=1");
+      if (!cancelled && res.ok && json?.ok) setUnreadContacts(json.stats?.unread ?? 0);
+    };
+    void loadUnread();
+    const t = setInterval(() => { void loadUnread(); }, 60000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [user]);
 
   if (loading) return <div className="p-8 text-sm text-muted-foreground">Loading admin...</div>;
   if (!user) return <Login onAuthed={(u) => { setUser(u); setCsrfToken(u.csrfToken || ""); }} />;
@@ -81,7 +95,10 @@ export function AdminApp() {
       </header>
       <div className="flex flex-wrap gap-2">
         {visibleTabs.map((t) => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`rounded-full px-3 py-2 text-sm font-medium ${tab === t.id ? "bg-primary text-primary-foreground" : "border border-border bg-surface/40 text-foreground-muted hover:text-foreground"}`}>{t.label}</button>
+          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`rounded-full px-3 py-2 text-sm font-medium ${tab === t.id ? "bg-primary text-primary-foreground" : "border border-border bg-surface/40 text-foreground-muted hover:text-foreground"}`}>
+            {t.label}
+            {t.id === "contacts" && unreadContacts > 0 && <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadContacts}</span>}
+          </button>
         ))}
       </div>
       {tab === "overview" && <Overview />}
@@ -89,7 +106,7 @@ export function AdminApp() {
       {tab === "stations" && <StationsPanel user={user} />}
       {tab === "countries" && <CountriesPanel user={user} />}
       {tab === "genres" && <GenresPanel user={user} />}
-      {tab === "contacts" && <ContactsPanel />}
+      {tab === "contacts" && <ContactsAdmin user={user} csrfToken={csrfToken} />}
       {tab === "stream-health" && <StreamHealthPanel />}
       {tab === "seo" && <SeoPanel />}
       {tab === "ads" && <AdsPanel />}
@@ -154,14 +171,22 @@ function Overview() {
 
 interface ListenerSummary { activeNow?: number; peakConcurrent?: number; totalSessionStarts?: number; topStations?: unknown; system?: unknown; error?: string }
 function ListenersPanel() {
-  const [token, setToken] = useState("");
   const [data, setData] = useState<ListenerSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  return <Panel title="Listener analytics" subtitle="Uses existing protected listener analytics endpoint (LISTENER_ADMIN_TOKEN). Real data only.">
-    <div className="flex flex-col gap-2 sm:flex-row">
-      <input className={inputCls} type="password" value={token} onChange={(e)=>setToken(e.target.value)} placeholder="LISTENER_ADMIN_TOKEN" />
-      <button className={btnCls} type="button" onClick={async ()=>{ setErr(null); const res = await fetch("/api/listeners/admin", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }); const json = await res.json() as ListenerSummary; if(!res.ok) setErr(json?.error||"Failed"); else setData(json); }}>Load</button>
-    </div>
+  const [loading, setLoading] = useState(false);
+  const load = async () => {
+    setLoading(true); setErr(null);
+    try {
+      const res = await fetch("/api/listeners/admin", { credentials: "include", cache: "no-store" });
+      const json = await res.json() as ListenerSummary;
+      if (!res.ok) setErr(json?.error || "Failed");
+      else setData(json);
+    } catch { setErr("Failed to load analytics"); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/set-state-in-effect -- initial fetch
+  return <Panel title="Listener analytics" subtitle="Real listener analytics from the protected admin endpoint. No PII is exposed here.">
+    <button className={btnCls} type="button" onClick={() => void load()} disabled={loading}>{loading ? "Loading..." : "Refresh"}</button>
     {err && <p className="mt-3 text-sm text-error">{err}</p>}
     {data && <pre className="mt-4 overflow-auto rounded-xl border border-border/60 bg-background/30 p-3 text-xs text-foreground-muted">{JSON.stringify({ activeNow: data.activeNow, peakConcurrent: data.peakConcurrent, totalSessionStarts: data.totalSessionStarts, topStations: data.topStations, system: data.system }, null, 2)}</pre>}
   </Panel>;
@@ -215,16 +240,6 @@ function GenresPanel({ user }: { user: User }) {
   return <Panel title="Genres" subtitle="Persistent genre management.">
     {canEdit && <div className="mb-4 grid gap-3 rounded-xl border border-border/60 bg-background/20 p-4 sm:grid-cols-3"><input className={inputCls} placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/><input className={inputCls} placeholder="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})}/><button className={btnCls} onClick={async()=>{await api("/api/admin/genres",{method:"POST",body:JSON.stringify(form)}); setForm({name:"",slug:""}); await load();}}>Add</button></div>}
     <div className="space-y-2">{items.map(g=><div key={g.id} className="flex items-center justify-between rounded-xl border border-border/60 bg-background/20 px-3 py-2 text-sm"><span>{g.name} <span className="text-muted-foreground">/{g.slug}</span></span>{canEdit && <button className={btn2Cls} onClick={async()=>{await api(`/api/admin/genres/${g.id}`,{method:"DELETE"}); await load();}}>Delete</button>}</div>)}</div>
-  </Panel>;
-}
-
-interface ContactRow { id: string; createdAt: string; name: string; email: string; topic: string; status: string; message: string }
-function ContactsPanel() {
-  const [items, setItems] = useState<ContactRow[]>([]);
-  const load = useCallback(async () => { const { json } = await api<{ ok?: boolean; items?: ContactRow[] }>("/api/admin/contacts?limit=50"); if (json?.ok && json.items) setItems(json.items); }, []);
-  useEffect(()=>{ let cancelled=false; (async()=>{ const { json } = await api<{ ok?: boolean; items?: ContactRow[] }>("/api/admin/contacts?limit=50"); if(!cancelled && json?.ok && json.items) setItems(json.items); })(); return ()=>{cancelled=true;}; },[]);
-  return <Panel title="Contact submissions" subtitle="Persistent DB-backed contact submissions from successful deliveries.">
-    <div className="space-y-3">{items.map(s=><div key={s.id} className="rounded-xl border border-border/60 bg-background/20 p-3 text-sm"><div className="flex flex-wrap justify-between gap-2"><span className="font-medium text-foreground">{s.name} &lt;{s.email}&gt;</span><span className="text-xs text-muted-foreground">{new Date(s.createdAt).toLocaleString()}</span></div><div className="text-xs text-muted-foreground">Topic: {s.topic} · Status: {s.status}</div><p className="mt-2 whitespace-pre-wrap text-foreground-muted">{s.message}</p><div className="mt-2 flex gap-2">{(["new","reviewed","resolved","spam"] as const).map(st=><button key={st} className={btn2Cls} onClick={async()=>{await api(`/api/admin/contacts/${s.id}`,{method:"PATCH",body:JSON.stringify({status:st})}); await load();}}>{st}</button>)}</div></div>)}{items.length===0 && <p className="text-sm text-muted-foreground">No submissions.</p>}</div>
   </Panel>;
 }
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   createContext,
@@ -252,6 +252,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (document.visibilityState === "hidden") return;
     const attempt = reconnectAttemptsRef.current;
     if (attempt >= MAX_AUTO_RECONNECTS) {
+      shouldAutoReconnectRef.current = false;
       setStatusSafe("error");
       setError("Stream connection lost. Please retry or choose another station.");
       void getPlaybackTracker().stop("reconnect-exhausted");
@@ -271,6 +272,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         if (!ok && shouldAutoReconnectRef.current && reconnectAttemptsRef.current < MAX_AUTO_RECONNECTS) {
           scheduleReconnectRef.current(reason);
         } else if (!ok) {
+          shouldAutoReconnectRef.current = false;
           setStatusSafe("error");
           setError("Stream connection lost. Please retry or choose another station.");
           void getPlaybackTracker().stop("reconnect-failed");
@@ -310,6 +312,41 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, 15000);
     return () => window.clearInterval(id);
   }, [status]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const station = currentStationRef.current;
+      const audio = audioRef.current;
+      if (!station || !audio || isSwitchingRef.current) return;
+      if (!shouldAutoReconnectRef.current) return;
+      if (statusRef.current === "loading" && !audio.paused) return;
+      if (audio.paused && (statusRef.current === "loading" || statusRef.current === "error" || statusRef.current === "idle")) {
+        void (async () => {
+          try {
+            setStatusSafe("loading");
+            await audio.play();
+          } catch {
+            scheduleReconnect("visibility-resume-failed");
+          }
+        })();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [scheduleReconnect, setStatusSafe]);
+
+  useEffect(() => {
+    if (status !== "loading") return;
+    const station = currentStationRef.current;
+    if (!station || !shouldAutoReconnectRef.current || isSwitchingRef.current) return;
+    const id = window.setTimeout(() => {
+      if (statusRef.current === "loading" && shouldAutoReconnectRef.current && !isSwitchingRef.current) {
+        scheduleReconnect("loading-timeout");
+      }
+    }, 20000);
+    return () => window.clearTimeout(id);
+  }, [status, scheduleReconnect]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -386,21 +423,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }}
         onPause={() => {
           if (isSwitchingRef.current) return;
-          setStatusSafe((statusRef.current === "error" || statusRef.current === "loading") ? statusRef.current : "idle");
-          if (statusRef.current !== "loading" && statusRef.current !== "error") {
-            void getPlaybackTracker().stop("pause");
-          }
+          if (statusRef.current === "error") return;
+          if (statusRef.current === "loading") return;
+          setStatusSafe("idle");
+          void getPlaybackTracker().stop("pause");
         }}
         onWaiting={() => {
           if (isSwitchingRef.current) return;
-          if (statusRef.current === "playing") {
+          if (statusRef.current === "playing" || statusRef.current === "loading") {
             setStatusSafe("loading");
-            // Do not immediately stop listener session; heartbeat/TTL handles brief buffering.
           }
         }}
         onStalled={() => {
-          if (isSwitchingRef.current || statusRef.current !== "playing") return;
-          setStatusSafe("loading");
+          if (isSwitchingRef.current) return;
+          if (statusRef.current === "playing") setStatusSafe("loading");
+        }}
+        onEnded={() => {
+          if (isSwitchingRef.current) return;
+          void getPlaybackTracker().stop("ended");
+          scheduleReconnect("ended");
         }}
         onError={() => {
           if (isSwitchingRef.current) return;

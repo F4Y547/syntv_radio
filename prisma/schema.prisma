@@ -15,10 +15,25 @@ enum AdminRole {
 }
 
 enum SubmissionStatus {
-  new
-  reviewed
-  resolved
-  spam
+  NEW
+  READ
+  IN_PROGRESS
+  REPLIED
+  ARCHIVED
+  SPAM
+}
+
+enum ContactPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ContactReplyStatus {
+  PENDING
+  SENT
+  FAILED
 }
 
 enum StationApprovalStatus {
@@ -28,16 +43,20 @@ enum StationApprovalStatus {
 }
 
 model AdminUser {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  name         String?
-  passwordHash String
-  role         AdminRole   @default(editor)
-  active       Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  sessions     AdminSession[]
-  auditLogs    AuditLog[]  @relation("AuditActor")
+  id                   String              @id @default(cuid())
+  email                String              @unique
+  name                 String?
+  passwordHash         String
+  role                 AdminRole           @default(editor)
+  active               Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  sessions             AdminSession[]
+  auditLogs            AuditLog[]          @relation("AuditActor")
+  assignedContacts     ContactSubmission[] @relation("AssignedContactSubmissions")
+  contactReplies       ContactReply[]      @relation("ContactReplyActor")
+  contactNotes         ContactNote[]       @relation("ContactNoteAuthor")
+  contactActivities    ContactActivity[]   @relation("ContactActivityActor")
 }
 
 model AdminSession {
@@ -104,19 +123,87 @@ model Genre {
 }
 
 model ContactSubmission {
-  id        String           @id @default(cuid())
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  name      String
-  email     String
-  topic     String
-  station   String?
-  message   String
-  status    SubmissionStatus @default(new)
-  ip        String?
-  userAgent String?
-  delivery  String           @default("accepted")
-  notes     String?
+  id           String           @id @default(cuid())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  name         String
+  email        String
+  topic        String
+  station      String?
+  message      String
+  status       SubmissionStatus @default(NEW)
+  priority     ContactPriority  @default(NORMAL)
+  assignedToId String?
+  assignedTo   AdminUser?       @relation("AssignedContactSubmissions", fields: [assignedToId], references: [id], onDelete: SetNull)
+  readAt       DateTime?
+  repliedAt    DateTime?
+  archivedAt   DateTime?
+  spamAt       DateTime?
+  ip           String?
+  userAgent    String?
+  delivery     String           @default("accepted")
+  notes        String?          // legacy plain notes; prefer ContactNote
+  replies      ContactReply[]
+  contactNotes ContactNote[]
+  activities   ContactActivity[]
+
+  @@index([status, createdAt])
+  @@index([priority, createdAt])
+  @@index([assignedToId, createdAt])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model ContactReply {
+  id                String             @id @default(cuid())
+  submissionId      String
+  submission        ContactSubmission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  actorId           String?
+  actor             AdminUser?         @relation("ContactReplyActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail        String?
+  toEmail           String
+  subject           String
+  bodyText          String
+  bodyHtml          String?
+  provider          String             @default("resend")
+  providerMessageId String?
+  status            ContactReplyStatus @default(PENDING)
+  error             String?
+  sentAt            DateTime?
+  createdAt         DateTime           @default(now())
+
+  @@index([submissionId, createdAt])
+  @@index([actorId])
+}
+
+model ContactNote {
+  id           String            @id @default(cuid())
+  submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  authorId     String?
+  author       AdminUser?        @relation("ContactNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorEmail  String?
+  body         String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([submissionId, createdAt])
+  @@index([authorId])
+}
+
+model ContactActivity {
+  id           String            @id @default(cuid())
+  submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  actorId      String?
+  actor        AdminUser?        @relation("ContactActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail   String?
+  type         String
+  detail       Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([submissionId, createdAt])
+  @@index([type])
 }
 
 model StreamHealthCheck {

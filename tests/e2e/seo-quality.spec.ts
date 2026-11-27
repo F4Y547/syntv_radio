@@ -23,10 +23,20 @@ test("official email is hidden unless verified and configured", () => {
     }),
   ).toBeNull();
 
+  // Verified mailbox reference is not enough when delivery config is invalid/unconfigured.
   expect(
     getPublicContactEmail({
       CONTACT_EMAIL_VERIFIED: "true",
       CONTACT_TO_EMAIL: "owner@example.com, hello@syntv.online",
+    }),
+  ).toBeNull();
+
+  expect(
+    getPublicContactEmail({
+      CONTACT_EMAIL_VERIFIED: "true",
+      CONTACT_TO_EMAIL: "owner@example.com, hello@syntv.online",
+      CONTACT_FROM_EMAIL: "SYNTV RADIO <hello@syntv.online>",
+      RESEND_API_KEY: "re_test_key",
     }),
   ).toBe("hello@syntv.online");
 
@@ -34,6 +44,8 @@ test("official email is hidden unless verified and configured", () => {
     getPublicContactEmail({
       CONTACT_EMAIL_VERIFIED: "true",
       CONTACT_FROM_EMAIL: "SYNTV RADIO <hello@syntv.online>",
+      CONTACT_TO_EMAIL: "hello@syntv.online",
+      RESEND_API_KEY: "re_test_key",
     }),
   ).toBe("hello@syntv.online");
 });

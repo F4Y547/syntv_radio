@@ -13,6 +13,7 @@ This document describes the technical preparation in this repository and the man
 | Real ad unit slot IDs | **Not supplied**. No slot IDs are committed or invented. |
 | Advertising | **Disabled by default**. No script, no containers, no placements render. |
 | AdSense approval | Not claimed or verified |
+| Final recommendation | **WAIT** — deploy and re-audit source fixes, publish the live site verification token, and confirm deployed contact inbox receipt before submitting. |
 
 ## What is implemented
 

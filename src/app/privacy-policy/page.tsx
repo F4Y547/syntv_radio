@@ -68,7 +68,14 @@ export default function PrivacyPolicyPage() {
         <p>
           When delivery is configured, the message is transmitted to the site operator through a configured email
           provider or webhook. That provider may process and retain the message under its own privacy policy. If the
-          form is not yet configured to deliver messages, it will display an error and will not store the message.
+          form is not configured to deliver messages, it displays an error and does not store the message. If delivery
+          is configured but notification fails after the message is saved, SYNTV RADIO may retain the message for
+          operator review and will show a clear notice in the form.
+        </p>
+        <p>
+          Contact submissions stored for operator review may include submission metadata such as timestamp, sender IP
+          address, and browser user-agent when available, to support abuse prevention, troubleshooting, and audit
+          history. This metadata is visible only to authorized administrators.
         </p>
         <p>
           <strong>Public GitHub issues.</strong> The site links to a public GitHub issue tracker for non-sensitive

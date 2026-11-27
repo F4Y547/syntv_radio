@@ -109,7 +109,16 @@ Production admin features require a persistent PostgreSQL database. **Do not use
 3. Create the first owner user securely (scrypt hash via `src/lib/admin/password.ts`); do not commit credentials.
 4. Sign in at `/admin`.
 
-Admin features: session login/logout (HttpOnly cookie, scrypt, revocable DB sessions), RBAC (`owner`, `administrator`, `editor`), station/country/genre CRUD, station approval/verification workflow, contact submission management, stream health history, SEO metadata management, ad configuration, audit logs. Mutating admin APIs enforce same-origin checks, rate limiting, RBAC, and no-store responses.
+Admin features: session login/logout (HttpOnly cookie, scrypt, revocable DB sessions), RBAC (`owner`, `administrator`, `editor`), station/country/genre CRUD, station approval/verification workflow, contact submission management, stream health history, SEO metadata management, ad configuration, audit logs. Mutating admin APIs enforce same-origin checks, rate limiting, RBAC, CSRF, and no-store responses.
+
+### Contact submissions management
+
+- **Admin UI**: `/admin/contacts` (also available in `/admin` dashboard tab) with stats, search, filters, server-side pagination, detail view, and unread badge.
+- **Workflow**: statuses `NEW`, `READ`, `IN_PROGRESS`, `REPLIED`, `ARCHIVED`, `SPAM`; priorities `LOW`, `NORMAL`, `HIGH`, `URGENT`; assignee, bulk actions, and destructive-delete confirmation.
+- **Replies**: admin reply composer uses Resend with the configured verified sender. Reply status is set to `REPLIED` only after provider acceptance; provider message ID/status/errors are stored. No arbitrary From addresses, no client-side secrets.
+- **Internal notes & activity**: private notes (author/timestamp, permissioned edit/delete) and activity timeline for received/opened/status/priority/assignment/reply/archive/spam/restore events.
+- **Public form**: `/contact` validates input, applies rate limiting/dedupe, persists submissions to Neon Postgres, and sends Resend notifications. If notification delivery fails after persistence, the submission is retained and the visitor receives a clear saved-not-notified response.
+- **Database**: `ContactSubmission`, `ContactReply`, `ContactNote`, `ContactActivity` models with migrations; existing records preserved. Run `npm run db:migrate` before deploying.
 
 ## Environment Variables
 
@@ -193,7 +202,7 @@ npm run build
 npm run test:e2e
 ```
 
-Playwright E2E coverage includes smoke flows, SEO checks, and AdSense-readiness checks in `tests/e2e/` (legal pages, footer links, exactly one verification meta tag, `ads.txt`, sitemap/robots, indexability, contact validation, mobile navigation, duplicate canonicals, and consent).
+Playwright E2E coverage includes smoke flows, SEO checks, AdSense-readiness checks, and Redis infrastructure regressions in `tests/e2e/` (legal pages, footer links, exactly one verification meta tag, `ads.txt`, sitemap/robots, indexability, contact validation/delivery/dedupe, listener presence, rate-limit expiry/fallback, public-cache invalidation, mobile navigation, duplicate canonicals, and consent).
 
 ## Deployment
 

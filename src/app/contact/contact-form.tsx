@@ -17,7 +17,7 @@ const TOPICS = [
 type Topic = (typeof TOPICS)[number]["value"];
 type FieldName = "email" | "topic" | "message" | "privacyAccepted";
 type FieldErrors = Partial<Record<FieldName, string>>;
-type Status = "idle" | "submitting" | "success" | "error" | "not-configured";
+type Status = "idle" | "submitting" | "success" | "saved-not-notified" | "error" | "not-configured";
 
 interface ContactFormProps {
   initialTopic?: string;
@@ -98,6 +98,19 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
         return;
       }
 
+      if (response.status === 502 && data.code === "delivery_failed_submission_saved") {
+        setStatus("saved-not-notified");
+        setServerError(data.error || "Your message was saved, but the notification could not be delivered. Our team can still review it.");
+        setName("");
+        setEmail("");
+        setTopic("general");
+        setStation("");
+        setMessage("");
+        setPrivacyAccepted(false);
+        setCompanyWebsite("");
+        return;
+      }
+
       if (data.field) setErrors((current) => ({ ...current, [data.field as FieldName]: data.error }));
       setServerError(data.error || "The message could not be sent. Please try again.");
       setStatus("error");
@@ -119,6 +132,25 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
         <button
           type="button"
           onClick={() => setStatus("idle")}
+          className="mt-4 rounded-full border border-border bg-foreground/[0.03] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Send another message
+        </button>
+      </div>
+    );
+  }
+
+  if (status === "saved-not-notified") {
+    return (
+      <div className="rounded-2xl border border-warning/30 bg-warning/10 p-6" role="status" aria-live="polite">
+        <AlertCircle size={24} className="text-warning" aria-hidden="true" />
+        <h2 className="mt-3 font-display text-xl font-semibold text-foreground">Message saved</h2>
+        <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+          {serverError || "Your message was saved, but the notification email could not be delivered. Our team can still review it in the admin dashboard."}
+        </p>
+        <button
+          type="button"
+          onClick={() => { setServerError(""); setStatus("idle"); }}
           className="mt-4 rounded-full border border-border bg-foreground/[0.03] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Send another message

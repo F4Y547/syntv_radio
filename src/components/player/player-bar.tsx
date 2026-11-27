@@ -53,6 +53,7 @@ export function PlayerBar() {
   const currentListeners = currentStation ? stationCounts[currentStation.id] : undefined;
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
+  const isReconnectNotice = Boolean(error) && isLoading && /reconnecting|interrupted/i.test(error ?? "");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset image fallback when station changes
@@ -110,8 +111,8 @@ export function PlayerBar() {
     </div>
   );
 
-  const statusLabel = isLoading ? "Connecting" : isPlaying ? "Live" : error ? "Error" : "Paused";
-  const statusColor = error ? "text-error" : isPlaying ? "text-live" : "text-muted-foreground";
+  const statusLabel = isReconnectNotice ? "Reconnecting" : isLoading ? "Connecting" : isPlaying ? "Live" : error ? "Error" : "Paused";
+  const statusColor = error && !isReconnectNotice ? "text-error" : isPlaying ? "text-live" : isReconnectNotice ? "text-amber-300" : "text-muted-foreground";
 
   return (
     <>
@@ -141,7 +142,7 @@ export function PlayerBar() {
               </p>
               <div className="mt-0.5 flex items-center gap-2 overflow-hidden text-xs text-muted-foreground sm:text-sm">
                 {error ? (
-                  <span className="inline-flex min-w-0 items-center gap-1 text-error">
+                  <span className={`inline-flex min-w-0 items-center gap-1 ${isReconnectNotice ? "text-amber-300" : "text-error"}`}>
                     <AlertCircle size={14} aria-hidden="true" className="shrink-0" />
                     <span className="truncate">{error}</span>
                   </span>
@@ -291,12 +292,12 @@ export function PlayerBar() {
               <div className="mt-6 flex justify-center"><Equalizer active={isPlaying} /></div>
 
               {error && (
-                <div className="mt-6 rounded-xl border border-error/30 bg-error-soft p-4 text-sm text-error">
+                <div className={`mt-6 rounded-xl border p-4 text-sm ${isReconnectNotice ? "border-amber-500/30 bg-amber-500/10 text-amber-200" : "border-error/30 bg-error-soft text-error"}`}>
                   <div className="flex items-start gap-2">
                     <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <p>{error}</p>
-                      <button type="button" onClick={() => void retry()} className="mt-2 inline-flex items-center gap-2 rounded-full border border-error/30 px-3 py-1.5 font-medium text-error hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <button type="button" onClick={() => void retry()} className={`mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isReconnectNotice ? "border-amber-500/30 text-amber-200 hover:bg-amber-500/10" : "border-error/30 text-error hover:bg-error/10"}`}>
                         Retry stream
                       </button>
                     </div>

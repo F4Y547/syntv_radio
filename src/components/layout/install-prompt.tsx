@@ -24,7 +24,7 @@ export function InstallPrompt() {
   if (!promptEvent || hidden) return null;
 
   return (
-    <div className="fixed bottom-[calc(var(--player-height)+1rem)] right-4 z-40 rounded-xl border border-border bg-surface-elevated p-4 shadow-[var(--shadow-lg)]">
+    <div className="fixed bottom-[calc(var(--player-height)+var(--mobile-nav-height)+env(safe-area-inset-bottom,0px)+1rem)] right-4 z-[45] rounded-xl border border-border bg-surface-elevated p-4 shadow-[var(--shadow-lg)] md:bottom-[calc(var(--player-height)+1rem)]">
       <p className="text-sm font-medium text-foreground">Install SYNTV RADIO</p>
       <p className="mt-1 text-xs text-muted-foreground">Get quick access from your device.</p>
       <div className="mt-3 flex gap-2">

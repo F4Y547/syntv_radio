@@ -1,21 +1,21 @@
-﻿# SYNTV RADIO Release Checklist
+# SYNTV RADIO Release Checklist
 
 This checklist is for staging/production release readiness. It does not authorize deployment, DNS changes, or AdSense enablement.
 
 ## Code / local verification (evidence required)
 
-- [ ] `npm audit --omit=dev` — record result/date.
-- [ ] `npx tsc --noEmit` — record result/date.
-- [ ] `npm run lint` — record result/date.
-- [ ] `npm run build` — record result/date.
-- [ ] `npx playwright test` — record passed/skipped/failed counts/date.
-- [ ] Prior evidence (2026-11-27, commit `58be2ff`): audit 0 vulns, tsc pass, lint pass, build pass, Playwright 120 passed/1 skipped/0 failed. Re-run after infrastructure changes.
+- [ ] Re-run 
+pm audit --omit=dev, 
+px tsc --noEmit, 
+pm run lint, 
+pm run build, 
+px playwright test after latest audit/contact-management changes; record actual results.
 - [ ] Confirm release commit deployed to staging/production; record deployed commit SHA.
-
 ## Infrastructure / database (Neon)
 
 - [x] Neon project linked: `syntv_radio` (`cold-smoke-03358808`), branch `production` (`br-wandering-mouse-bdgaiwkk`), org `org-still-field-14757566` (2026-11-27).
 - [x] Prisma migrations applied to Neon production DB; Prisma client generated (2026-11-27).
+- [ ] Apply `20260528000000_contact_management_upgrade` migration to staging/production Neon DB before deploying contact management UI/API (`npm run db:migrate`). Preserve existing contact records.
 - [x] `DATABASE_URL` and `DATABASE_URL_UNPOOLED` configured locally (`.env.local`, gitignored) and added to Vercel Production/Preview/Development (names only; values not recorded).
 - [ ] Bootstrap first owner with secure env vars: `npm run db:bootstrap-owner` (requires `DATABASE_URL`, `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`; no default credentials).
 - [ ] Confirm DB connectivity and admin CRUD persistence on deployed/staging environment.
@@ -57,6 +57,7 @@ Required variables (do not print secret values):
 - [x] Resend API test message accepted: HTTP 200, id `01a21dfa-e3e0-72f5-9216-5bbdc9ffbe5e` (2026-11-27).
 - [ ] **Inbox receipt confirmed** in `hello@syntv.online` (human/evidence required).
 - [ ] Real deployed `/contact` submission confirmed accepted and received.
+- [ ] Admin contact management verified on deployed environment: list/search/filter/pagination, detail view, status/priority/assignment, internal notes, reply send via Resend, bulk actions, RBAC/CSRF, and audit/activity history.
 - [ ] Only after deployed confirmation: set `CONTACT_EMAIL_VERIFIED=true` in secure env; redeploy; confirm public email display is intentional and correct.
 - [ ] Rotate any API key exposed in chat/logs.
 

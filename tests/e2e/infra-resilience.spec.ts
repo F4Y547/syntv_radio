@@ -5,6 +5,7 @@ function sid(n: number) {
 }
 const stationA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const stationB = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const uniqueClientIp = () => `203.0.113.${(Date.now() % 250) + 1}`;
 
 test.describe("infrastructure resilience", () => {
   test("contact duplicate submission is rejected (atomic dedupe behavior)", async ({ request }) => {
@@ -16,11 +17,12 @@ test.describe("infrastructure resilience", () => {
       privacyAccepted: true,
       website: "",
     };
-    const first = await request.post("/api/contact", { data: payload });
+    const clientIp = uniqueClientIp();
+    const first = await request.post("/api/contact", { headers: { "x-forwarded-for": clientIp }, data: payload });
     // In test env without delivery config, may be 503; with config, 200. Duplicate check runs after config checks in handler?
     // handler checks config before dedupe, so 503 is acceptable. We assert behavior is deterministic.
     const firstStatus = first.status();
-    const second = await request.post("/api/contact", { data: payload });
+    const second = await request.post("/api/contact", { headers: { "x-forwarded-for": clientIp }, data: payload });
     const secondStatus = second.status();
     // If delivery unconfigured/invalid, both 503; if accepted, second should be 409 duplicate.
     if (firstStatus === 200) {
@@ -35,6 +37,7 @@ test.describe("infrastructure resilience", () => {
 
   test("contact responses always expose rate-limit headers", async ({ request }) => {
     const res = await request.post("/api/contact", {
+      headers: { "x-forwarded-for": uniqueClientIp() },
       data: {
         name: "Rate Header User",
         email: "rate-header@example.com",

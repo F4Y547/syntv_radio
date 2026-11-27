@@ -86,7 +86,7 @@ export function ConsentManager() {
       <section
         data-testid="consent-banner"
         aria-labelledby="consent-banner-title"
-        className="fixed inset-x-0 bottom-[calc(var(--player-height)+env(safe-area-inset-bottom,0px)+0.75rem)] z-50 px-3"
+        className="fixed inset-x-0 bottom-[calc(var(--player-height)+var(--mobile-nav-height)+env(safe-area-inset-bottom,0px)+0.75rem)] z-[55] px-3 md:bottom-[calc(var(--player-height)+env(safe-area-inset-bottom,0px)+0.75rem)]"
       >
         <div className="container-page">
           <div className="mx-auto max-w-3xl rounded-2xl border border-border/80 bg-surface-elevated/95 p-4 shadow-[var(--shadow-lg)] backdrop-blur-xl sm:p-5">

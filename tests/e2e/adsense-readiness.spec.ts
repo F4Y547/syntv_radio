@@ -164,6 +164,7 @@ test.describe("contact form", () => {
 
   test("API rejects an invalid email without delivering a message", async ({ request }) => {
     const response = await request.post("/api/contact", {
+      headers: { "x-forwarded-for": `198.51.100.${(Date.now() % 250) + 1}` },
       data: {
         name: "Test",
         email: "not-an-email",
