@@ -48,6 +48,7 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-body);
   min-height: 100%;
+  overflow-x: hidden;
   text-rendering: optimizeLegibility;
   background-image:
     radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 60%),
@@ -131,4 +132,14 @@ body {
 
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root {
+  --mobile-nav-height: 0px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --mobile-nav-height: 4.5rem;
+  }
 }

@@ -106,11 +106,13 @@ test.describe("AdSense readiness", () => {
     expect(body).toBe(`google.com, pub-6652257842391620, DIRECT, f08c47fec0942fa0`);
   });
 
-  test("no AdSense library or ad slot is loaded by default", async ({ page }) => {
+  test("AdSense script is present in head and no fake ad slots are rendered", async ({ page }) => {
     await acceptEssentialConsent(page);
     await page.goto("/");
-    await expect(page.locator('script[src*="pagead2.googlesyndication.com"]')).toHaveCount(0);
-    await expect(page.locator('ins.adsbygoogle')).toHaveCount(0);
+    const script = page.locator('head script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6652257842391620"]');
+    await expect(script).toHaveCount(1);
+    await expect(page.locator('[data-testid="ad-slot"]')).toHaveCount(0);
+    await expect(page.locator('ins.adsbygoogle[data-ad-slot]')).toHaveCount(0);
     await expect(page.getByTestId("ad-slot")).toHaveCount(0);
   });
 
@@ -181,14 +183,14 @@ test.describe("mobile navigation", () => {
   test("mobile menu exposes information and legal navigation", async ({ page }) => {
     await acceptEssentialConsent(page);
     await page.goto("/");
-    await page.getByRole("button", { name: /open menu/i }).click();
-    const mobileNav = page.locator("#mobile-nav");
-    await expect(mobileNav).toBeVisible();
-    await expect(mobileNav.getByRole("link", { name: "About", exact: true })).toBeVisible();
-    await expect(mobileNav.getByRole("link", { name: "FAQ", exact: true })).toBeVisible();
-    await mobileNav.getByRole("link", { name: "Contact", exact: true }).click();
+    await page.getByRole("button", { name: "More navigation options" }).click();
+    const moreDialog = page.getByRole("dialog", { name: "More navigation" });
+    await expect(moreDialog).toBeVisible();
+    await expect(moreDialog.getByRole("link", { name: "About", exact: false })).toBeVisible();
+    await expect(moreDialog.getByRole("link", { name: "Privacy policy", exact: false })).toBeVisible();
+    await moreDialog.getByRole("link", { name: "Contact", exact: false }).click();
     await expect(page).toHaveURL(/\/contact$/);
-    await expect(page.locator("#mobile-nav")).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "More navigation" })).toHaveCount(0);
   });
 });
 

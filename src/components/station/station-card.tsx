@@ -51,8 +51,8 @@ export function StationCard({ station }: StationCardProps) {
         </div>
       )}
 
-      <div className="flex min-w-0 items-start gap-3 pr-20">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 text-primary ring-1 ring-white/5">
+      <div className={`flex min-w-0 items-start gap-3 ${isCurrent ? "pr-24 sm:pr-20" : ""}`}>
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 text-primary ring-1 ring-white/5 sm:h-16 sm:w-16">
           {station.favicon && !imgFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -113,7 +113,7 @@ export function StationCard({ station }: StationCardProps) {
         <button
           type="button"
           onClick={handlePlay}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_color-mix(in_srgb,var(--color-primary)_24%,transparent)] transition-all duration-200 hover:-translate-y-px hover:bg-primary-hover hover:shadow-[0_12px_32px_color-mix(in_srgb,var(--color-primary)_30%,transparent)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-h-11 min-w-[44px] items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_color-mix(in_srgb,var(--color-primary)_24%,transparent)] transition-all duration-200 hover:-translate-y-px hover:bg-primary-hover hover:shadow-[0_12px_32px_color-mix(in_srgb,var(--color-primary)_30%,transparent)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
           aria-label={isPlaying ? `Pause ${station.name}` : `Play ${station.name}`}
           aria-pressed={isPlaying}
         >

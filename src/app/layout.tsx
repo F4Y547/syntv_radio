@@ -156,6 +156,13 @@ export default function RootLayout({
       className={`${manrope.variable} ${spaceGrotesk.variable} h-full`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6652257842391620"
+          crossOrigin="anonymous"
+        ></script>
+      </head>
       <body className="min-h-full bg-background text-foreground antialiased">
         <script
           type="application/ld+json"

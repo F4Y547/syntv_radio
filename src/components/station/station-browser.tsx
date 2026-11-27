@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, Globe2, Sparkles, AlertCircle, RefreshCw, X, LoaderCircle, Radio, Music2, MapPinned, ChevronLeft, ChevronRight } from "lucide-react";
@@ -43,6 +44,18 @@ export function StationBrowser() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
+  const filterRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(filtersOpen, filterRef);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setFiltersOpen(false); };
+    document.addEventListener("keydown", onKeyDown);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => filterRef.current?.querySelector<HTMLElement>('button[aria-label="Close filters"]')?.focus(), 0);
+    return () => { window.clearTimeout(t); document.removeEventListener("keydown", onKeyDown); document.body.style.overflow = prev; };
+  }, [filtersOpen]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -152,7 +165,7 @@ export function StationBrowser() {
 
   return (
     <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-surface/25 p-6 shadow-[var(--shadow-lg)] backdrop-blur-sm sm:p-8 lg:p-10">
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-surface/25 p-5 shadow-[var(--shadow-lg)] backdrop-blur-sm sm:p-8 lg:p-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_65%_55%_at_68%_28%,color-mix(in_srgb,var(--color-primary)_18%,transparent),transparent_55%),radial-gradient(ellipse_45%_45%_at_18%_82%,color-mix(in_srgb,var(--color-live)_10%,transparent),transparent_55%),radial-gradient(ellipse_35%_35%_at_50%_0%,color-mix(in_srgb,var(--color-primary)_8%,transparent),transparent_60%)]" aria-hidden="true" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" aria-hidden="true" />
         <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
@@ -164,10 +177,10 @@ export function StationBrowser() {
                 <span className="h-1.5 w-1.5 rounded-full bg-live shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-live)_15%,transparent)]" aria-hidden="true" />
                 <Sparkles size={13} aria-hidden="true" /> Live from every corner
               </p>
-              <h1 className="mt-5 max-w-3xl font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-[4rem] lg:leading-[0.95]">
+              <h1 className="mt-4 max-w-3xl font-display text-[2rem] font-bold leading-[1.05] tracking-tight text-foreground sm:mt-5 sm:text-5xl lg:text-[4rem] lg:leading-[0.95]">
                 Listen to the world, <span className="bg-gradient-to-r from-primary via-cyan-300 to-primary/80 bg-clip-text text-transparent">one station at a time.</span>
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-foreground-muted sm:text-lg">
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground-muted sm:mt-5 sm:text-lg">
                 Discover free live radio across countries, languages, and genres. Search instantly, save favorites, and keep playback running while you explore the globe.
               </p>
 
@@ -190,7 +203,7 @@ export function StationBrowser() {
               </div>
             </div>
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-4 sm:mt-8">
               <form
                 className="grid gap-3 sm:grid-cols-[1fr_auto] lg:grid-cols-[1fr_auto_auto]"
                 onSubmit={(e) => { e.preventDefault(); setDebouncedQuery(query.trim()); setPage(1); }}
@@ -233,63 +246,84 @@ export function StationBrowser() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFiltersOpen((v) => !v)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-foreground/[0.03] px-4 py-3.5 text-sm font-medium text-foreground transition hover:bg-foreground/[0.06] lg:hidden sm:col-span-2"
+                  onClick={() => setFiltersOpen(true)}
+                  className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-border bg-foreground/[0.03] px-4 py-3.5 text-sm font-medium text-foreground transition hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden sm:col-span-2"
                   aria-expanded={filtersOpen}
-                  aria-controls="browse-filters"
+                  aria-controls="mobile-filter-drawer"
                 >
                   <SlidersHorizontal size={16} aria-hidden="true" /> Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
                 </button>
               </form>
 
-              <div id="browse-filters" className={`${filtersOpen ? "grid" : "hidden"} gap-3 lg:grid lg:grid-cols-[220px_220px_auto]`}>
+              {/* Desktop filters */}
+              <div className="hidden gap-3 lg:grid lg:grid-cols-[220px_220px_auto]">
                 <label className="relative block">
                   <span className="sr-only">Filter by country</span>
                   <Globe2 size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                  <select
-                    value={country}
-                    onChange={(e) => { setCountry(e.target.value); setPage(1); }}
-                    className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  >
+                  <select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
                     <option value="">All countries</option>
-                    {filters.countries.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.name}
-                      </option>
-                    ))}
+                    {filters.countries.map((c) => (<option key={c.code} value={c.code}>{c.name}</option>))}
                   </select>
                 </label>
-
                 <label className="relative block">
                   <span className="sr-only">Filter by genre</span>
                   <SlidersHorizontal size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                  <select
-                    value={tag}
-                    onChange={(e) => { setTag(e.target.value); setPage(1); }}
-                    className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  >
+                  <select value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
                     <option value="">All genres</option>
-                    {filters.tags.map((t) => (
-                      <option key={t.name} value={t.name}>
-                        {t.name}
-                      </option>
-                    ))}
+                    {filters.tags.map((t) => (<option key={t.name} value={t.name}>{t.name}</option>))}
                   </select>
                 </label>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setCountry("");
-                    setTag("");
-                    setPage(1);
-                  }}
-                  className="self-center justify-self-start rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs font-medium text-foreground-muted transition hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
+                <button type="button" onClick={() => { setQuery(""); setCountry(""); setTag(""); setPage(1); }} className="self-center justify-self-start rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs font-medium text-foreground-muted transition hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   Clear{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
                 </button>
               </div>
+
+              {/* Mobile filter drawer */}
+              {filtersOpen && (
+                <div id="mobile-filter-drawer" className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+                  <button type="button" className="absolute inset-0 bg-black/45 backdrop-blur-sm" aria-label="Close filters" onClick={() => setFiltersOpen(false)} />
+                  <div ref={filterRef} className="absolute inset-x-0 bottom-0 max-h-[min(85vh,40rem)] overflow-y-auto rounded-t-[1.75rem] border-t border-border/70 bg-background/95 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] shadow-[var(--shadow-lg)] backdrop-blur-2xl animate-player-rise">
+                    <div className="sticky top-0 z-10 bg-background/95 px-5 pb-3 pt-3 backdrop-blur-2xl">
+                      <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-foreground/20" aria-hidden="true" />
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-display text-lg font-semibold text-foreground">Filters</p>
+                          <p className="text-sm text-muted-foreground">{activeFilterCount > 0 ? `${activeFilterCount} active filter${activeFilterCount > 1 ? "s" : ""}` : "Refine your station search"}</p>
+                        </div>
+                        <button type="button" onClick={() => setFiltersOpen(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-foreground/[0.03] text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Close filters">
+                          <X size={20} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-4 px-5 pb-4">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-foreground">Country</span>
+                        <div className="relative">
+                          <Globe2 size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                          <select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3.5 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                            <option value="">All countries</option>
+                            {filters.countries.map((c) => (<option key={c.code} value={c.code}>{c.name}</option>))}
+                          </select>
+                        </div>
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-foreground">Genre</span>
+                        <div className="relative">
+                          <SlidersHorizontal size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                          <select value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3.5 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                            <option value="">All genres</option>
+                            {filters.tags.map((t) => (<option key={t.name} value={t.name}>{t.name}</option>))}
+                          </select>
+                        </div>
+                      </label>
+                    </div>
+                    <div className="flex gap-3 border-t border-border/60 px-5 pt-4">
+                      <button type="button" onClick={() => { setCountry(""); setTag(""); setPage(1); }} className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm font-medium text-foreground hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Clear all</button>
+                      <button type="button" onClick={() => setFiltersOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Apply filters</button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {quickTags.length > 0 && !debouncedQuery && !country && !tag && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -309,8 +343,8 @@ export function StationBrowser() {
             </div>
           </div>
 
-          <div className="min-h-[380px] lg:min-h-[580px]">
-            <GlobeMap countries={filters.countries} showFrame={false} className="min-h-[380px] lg:min-h-0 h-full" />
+          <div className="min-h-[280px] sm:min-h-[340px] lg:min-h-[580px]">
+            <GlobeMap countries={filters.countries} showFrame={false} className="min-h-[280px] sm:min-h-[340px] lg:min-h-0 h-full" />
           </div>
         </div>
       </section>
@@ -392,7 +426,7 @@ export function StationBrowser() {
       </section>
 
       {recents.length > 0 && (
-        <section aria-labelledby="recents-heading" className="space-y-4">
+        <section id="recents" aria-labelledby="recents-heading" className="space-y-4 scroll-mt-24">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Jump back in</p>
             <h2 id="recents-heading" className="font-display text-2xl font-bold tracking-tight text-foreground">Recently played</h2>
