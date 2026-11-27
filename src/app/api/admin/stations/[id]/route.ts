@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 import type { StationApprovalStatus } from "@prisma/client";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -46,6 +47,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   try {
     const station = await prisma.station.update({ where: { id }, data });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "station.update", targetType: "station", targetId: id, detail: { fields: Object.keys(data) } });
+    await invalidatePublicDirectoryCache(["stations"]);
     return adminJson({ ok: true, station }, undefined, g.rl);
   } catch {
     return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl);
@@ -60,6 +62,7 @@ export async function DELETE(request: Request, ctx: Ctx) {
   try {
     await prisma.station.delete({ where: { id } });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "station.delete", targetType: "station", targetId: id });
+    await invalidatePublicDirectoryCache(["stations"]);
     return adminJson({ ok: true }, undefined, g.rl);
   } catch {
     return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl);

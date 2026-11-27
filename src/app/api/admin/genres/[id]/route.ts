@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, ctx: Ctx) {
@@ -16,6 +17,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   try {
     const item = await getPrisma().genre.update({ where: { id }, data });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "genre.update", targetType: "genre", targetId: id });
+    await invalidatePublicDirectoryCache(["genres"]);
     return adminJson({ ok: true, item }, undefined, g.rl);
   } catch { return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl); }
 }
@@ -27,6 +29,7 @@ export async function DELETE(request: Request, ctx: Ctx) {
   try {
     await getPrisma().genre.delete({ where: { id } });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "genre.delete", targetType: "genre", targetId: id });
+    await invalidatePublicDirectoryCache(["genres"]);
     return adminJson({ ok: true }, undefined, g.rl);
   } catch { return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl); }
 }

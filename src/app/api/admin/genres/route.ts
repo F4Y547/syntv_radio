@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 
 export async function GET(request: Request) {
   const g = await adminGuard(request, { minimum: "editor" });
@@ -19,5 +20,6 @@ export async function POST(request: Request) {
   if (!name || !slug) return adminJson({ ok: false, error: "name, slug required" }, { status: 400 }, g.rl);
   const item = await getPrisma().genre.create({ data: { name, slug, isActive: r.isActive !== false } });
   await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "genre.create", targetType: "genre", targetId: item.id, detail: { slug } });
+  await invalidatePublicDirectoryCache(["genres"]);
   return adminJson({ ok: true, item }, { status: 201 }, g.rl);
 }

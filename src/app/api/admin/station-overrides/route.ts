@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 
 export async function GET(request: Request) {
   const g = await adminGuard(request, { minimum: "editor", rateKey: "admin:station-overrides:get" });
@@ -44,5 +45,6 @@ export async function POST(request: Request) {
     ? await prisma.station.update({ where: { id: existing.id }, data })
     : await prisma.station.create({ data: { externalId: stationId, name: `Station ${stationId.slice(0, 8)}`, streamUrl: "", approvalStatus: "pending", ...data } });
   await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "station.override_upsert", targetType: "station", targetId: station.id, detail: { stationId, featured: data.isFeatured, verified: data.isVerified, hidden: !data.isActive } });
+  await invalidatePublicDirectoryCache(["stations"]);
   return adminJson({ ok: true, override: { stationId, featured: station.isFeatured, verified: station.isVerified, hidden: !station.isActive, note: station.description, updatedAt: station.updatedAt.toISOString(), updatedBy: g.user.email } }, undefined, g.rl);
 }

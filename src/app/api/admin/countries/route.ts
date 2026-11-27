@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 
 export async function GET(request: Request) {
   const g = await adminGuard(request, { minimum: "editor" });
@@ -22,5 +23,6 @@ export async function POST(request: Request) {
   const prisma = getPrisma();
   const item = await prisma.country.create({ data: { name, code, slug, isActive: r.isActive !== false } });
   await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "country.create", targetType: "country", targetId: item.id, detail: { code } });
+  await invalidatePublicDirectoryCache(["countries"]);
   return adminJson({ ok: true, item }, { status: 201 }, g.rl);
 }

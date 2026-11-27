@@ -9,22 +9,22 @@ export async function adminGuard(request: Request, opts?: { minimum?: AdminRole;
   const ip = getClientIp(request);
   const rl = await checkRateLimitAsync(opts?.rateKey ?? `admin:api:${ip}`, opts?.limit ?? 60, opts?.windowMs ?? 60_000);
   if (!rl.allowed) {
-    return { error: NextResponse.json({ ok: false, error: "Too many requests" }, { status: 429, headers: rateLimitHeaders(rl) }), rl };
+    return { error: NextResponse.json({ ok: false, error: "Too many requests" }, { status: 429, headers: { "Cache-Control": "no-store", ...rateLimitHeaders(rl) } }), rl };
   }
   if (opts?.mutate) {
     const originErr = await assertSameOrigin(request);
-    if (originErr) return { error: NextResponse.json({ ok: false, error: "Invalid origin" }, { status: 403, headers: rateLimitHeaders(rl) }), rl };
+    if (originErr) return { error: NextResponse.json({ ok: false, error: "Invalid origin" }, { status: 403, headers: { "Cache-Control": "no-store", ...rateLimitHeaders(rl) } }), rl };
   }
   if (!hasDatabase()) {
-    return { error: NextResponse.json({ ok: false, error: "DATABASE_URL is not configured" }, { status: 503, headers: rateLimitHeaders(rl) }), rl };
+    return { error: NextResponse.json({ ok: false, error: "DATABASE_URL is not configured" }, { status: 503, headers: { "Cache-Control": "no-store", ...rateLimitHeaders(rl) } }), rl };
   }
   const auth = await requireAdmin(opts?.minimum ?? "editor");
   if ("response" in auth) {
-    return { error: new NextResponse(auth.response.body, { status: auth.response.status, headers: { ...Object.fromEntries(auth.response.headers), ...rateLimitHeaders(rl) } }), rl };
+    return { error: new NextResponse(auth.response.body, { status: auth.response.status, headers: { "Cache-Control": "no-store", ...Object.fromEntries(auth.response.headers), ...rateLimitHeaders(rl) } }), rl };
   }
   if (opts?.mutate) {
     const csrfErr = assertCsrf(request, auth.user.csrfToken);
-    if (csrfErr) return { error: NextResponse.json({ ok: false, error: "Invalid CSRF token" }, { status: 403, headers: rateLimitHeaders(rl) }), rl };
+    if (csrfErr) return { error: NextResponse.json({ ok: false, error: "Invalid CSRF token" }, { status: 403, headers: { "Cache-Control": "no-store", ...rateLimitHeaders(rl) } }), rl };
   }
   return { user: auth.user, rl };
 }

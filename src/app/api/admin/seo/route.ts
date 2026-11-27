@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 
 export async function GET(request: Request) {
   const g = await adminGuard(request, { minimum: "editor" });
@@ -28,5 +29,6 @@ export async function POST(request: Request) {
   };
   const item = await getPrisma().seoMetadata.upsert({ where: { path }, create: data, update: data });
   await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "seo.upsert", targetType: "seo", targetId: item.id, detail: { path } });
+  await invalidatePublicDirectoryCache(["stations", "countries", "genres"]);
   return adminJson({ ok: true, item }, { status: 201 }, g.rl);
 }

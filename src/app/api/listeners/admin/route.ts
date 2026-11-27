@@ -94,6 +94,6 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     console.error("[listeners/admin]", error);
-    return NextResponse.json({ success: false, error: "Analytics unavailable" }, { status: 503, headers: rateLimitHeaders(rl) });
+    return NextResponse.json({ success: false, error: "Analytics unavailable" }, { status: 503, headers: { "Cache-Control": "no-store", ...rateLimitHeaders(rl) } });
   }
 }

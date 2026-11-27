@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, ctx: Ctx) {
@@ -18,6 +19,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   try {
     const item = await prisma.country.update({ where: { id }, data });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "country.update", targetType: "country", targetId: id });
+    await invalidatePublicDirectoryCache(["countries"]);
     return adminJson({ ok: true, item }, undefined, g.rl);
   } catch { return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl); }
 }
@@ -30,6 +32,7 @@ export async function DELETE(request: Request, ctx: Ctx) {
   try {
     await prisma.country.delete({ where: { id } });
     await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "country.delete", targetType: "country", targetId: id });
+    await invalidatePublicDirectoryCache(["countries"]);
     return adminJson({ ok: true }, undefined, g.rl);
   } catch { return adminJson({ ok: false, error: "Not found" }, { status: 404 }, g.rl); }
 }

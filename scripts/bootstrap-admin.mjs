@@ -28,6 +28,15 @@ if (password.length < 12) {
 
 const prisma = new PrismaClient();
 try {
+  await prisma.$connect();
+} catch (err) {
+  console.error("Database unavailable or DATABASE_URL invalid. Owner bootstrap aborted.");
+  console.error(err instanceof Error ? err.message : String(err));
+  await prisma.$disconnect().catch(() => {});
+  process.exit(1);
+}
+
+try {
   const existingOwner = await prisma.adminUser.findFirst({ where: { role: "owner", active: true } });
   if (existingOwner && !force) {
     console.error("An active owner already exists. Set ADMIN_BOOTSTRAP_FORCE=true only if you intentionally need another owner.");

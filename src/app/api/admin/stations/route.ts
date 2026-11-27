@@ -1,6 +1,7 @@
 import { adminGuard, adminJson } from "@/lib/admin/api";
 import { getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
+import { invalidatePublicDirectoryCache } from "@/lib/cache/invalidate-public";
 import type { StationApprovalStatus } from "@prisma/client";
 
 function parseIntSafe(v: unknown) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : undefined; }
@@ -57,5 +58,6 @@ export async function POST(request: Request) {
     },
   });
   await addAuditLog({ actorId: g.user.id, actorEmail: g.user.email, action: "station.create", targetType: "station", targetId: station.id, detail: { name: station.name } });
+  await invalidatePublicDirectoryCache(["stations"]);
   return adminJson({ ok: true, station }, { status: 201 }, g.rl);
 }
