@@ -198,9 +198,10 @@ export default function AboutPage() {
 
         <InfoSection id="contact" title="Contact">
           <p>
-            Use the <Link href="/contact">contact form</Link> to reach the site operator. The form supports general
-            questions, technical support, station-owner reports, copyright and content-removal requests, privacy
-            requests, and advertising or partnership questions.
+            Use the <Link href="/contact">contact form</Link> to reach the site operator, or email{" "}
+            <a href="mailto:hello@syntv.online" className="text-primary hover:underline">hello@syntv.online</a>. The
+            form supports general questions, technical support, station-owner reports, copyright and content-removal
+            requests, privacy requests, and advertising or partnership questions.
           </p>
         </InfoSection>
       </InfoPage>

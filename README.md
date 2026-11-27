@@ -128,8 +128,8 @@ Create a local `.env.local` from [`.env.example`](./.env.example). Never commit 
 | `CONTACT_WEBHOOK_URL` | One contact option | Absolute HTTP(S) webhook that receives validated contact messages; takes precedence over Resend |
 | `CONTACT_WEBHOOK_SECRET` | Optional | Bearer token sent to the contact webhook over HTTPS |
 | `RESEND_API_KEY` | One contact option | Official Resend SDK API key for contact email delivery |
-| `CONTACT_FROM_EMAIL` | With Resend | Verified Resend sender address |
-| `CONTACT_TO_EMAIL` | With Resend | Recipient address or comma-separated list |
+| `CONTACT_FROM_EMAIL` | With Resend | Verified Resend sender address (official: `SYNTV RADIO <hello@syntv.online>` after domain verification) |
+| `CONTACT_TO_EMAIL` | With Resend | Recipient address or comma-separated list (official: `hello@syntv.online`) |
 | `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | Default publisher ID | Public AdSense publisher ID (`ca-pub-6652257842391620`) |
 | `NEXT_PUBLIC_ADSENSE_SLOT_HOME` | With ads | Real numeric homepage ad unit slot ID |
 | `NEXT_PUBLIC_ADSENSE_SLOT_LISTING` | With ads | Real numeric listing/country/genre ad unit slot ID |
@@ -154,7 +154,7 @@ SYNTV RADIO tracks **active playback sessions on SYNTV RADIO** (not global exter
 - The contact form validates input in the browser and on the server, uses a honeypot, IP rate limiting, and content-hash duplicate protection, and delivers through a validated webhook (preferred) or the official Resend SDK. Without delivery configuration it returns a clear `503 contact_not_configured` response and does not store messages.
 - Optional analytics and advertising choices are off by default. Global Privacy Control / Do Not Track signals force them off.
 - The first-party consent banner is a transparency and choice UI, **not** a Google-certified CMP. For regulated regions, the site owner must configure the certified CMP through the AdSense account before enabling ads.
-- No phone number, postal address, company registration number, or unverified email address is published. Only use the contact form unless the owner explicitly approves public contact details.
+- No phone number, postal address, or company registration number is published. The official contact email is `hello@syntv.online` (mailto) and the contact form is the primary channel; email delivery/verification must be confirmed with the configured provider/DNS before claiming it is operational.
 
 ## AdSense Readiness
 

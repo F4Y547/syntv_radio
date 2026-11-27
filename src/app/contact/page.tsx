@@ -32,6 +32,20 @@ const contactJsonLd = {
   description:
     "Contact form for technical support, station-owner requests, copyright reports, privacy requests, and general questions.",
   isPartOf: { "@type": "WebSite", name: siteName, url: siteUrl },
+  mainEntity: {
+    "@type": "Organization",
+    name: siteName,
+    email: "hello@syntv.online",
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        email: "hello@syntv.online",
+        contactType: "customer support",
+        availableLanguage: ["English"],
+        url: absoluteUrl("/contact"),
+      },
+    ],
+  },
 };
 
 interface Props {
@@ -62,11 +76,14 @@ export default async function ContactPage({ searchParams }: Props) {
         }
       >
         <InfoSection id="form" title="Send a message">
-          <InfoCallout title="No unverified contact details are published" tone="info">
+          <InfoCallout title="Official contact channel" tone="info">
             <p>
-              SYNTV RADIO does not publish a phone number, postal address, company registration number, or unverified
-              email address. The form below is the primary contact channel. For non-sensitive technical reports, a
-              public GitHub issue tracker is also available.
+              The form below is the primary contact channel. The official SYNTV RADIO email address is{" "}
+              <a href="mailto:hello@syntv.online" className="text-primary hover:underline">hello@syntv.online</a>.
+              Delivery depends on the configured email provider and domain verification; do not assume mailbox delivery
+              until provider/DNS verification is confirmed. SYNTV RADIO does not publish a phone number, postal address,
+              or company registration number. For non-sensitive technical reports, a public GitHub issue tracker is also
+              available.
             </p>
           </InfoCallout>
           <div className="pt-2">

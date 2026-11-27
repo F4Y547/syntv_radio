@@ -65,14 +65,14 @@ Configure the receiving endpoint to return 2xx only after it has accepted the pa
 
 ### Option B: Resend
 
-1. Create a Resend account and add/verify the domain used for `CONTACT_FROM_EMAIL` in **Domains**. Complete the DNS records Resend shows.
+1. Create a Resend account and add/verify the domain used for `CONTACT_FROM_EMAIL` in **Domains**. Complete the DNS records Resend shows (SPF/DKIM and any provider-required records; add DMARC as recommended below).
 2. Create an API key in **API Keys** with permission to send email.
-3. Set these variables in the hosting dashboard:
+3. Set these variables in the hosting dashboard after domain/sender verification:
 
 ```text
 RESEND_API_KEY=re_...
-CONTACT_FROM_EMAIL=SYNTV RADIO <contact@your-verified-domain.example>
-CONTACT_TO_EMAIL=owner@your-verified-domain.example
+CONTACT_FROM_EMAIL=SYNTV RADIO <hello@syntv.online>
+CONTACT_TO_EMAIL=hello@syntv.online
 ```
 
 `CONTACT_TO_EMAIL` accepts a comma-separated list. The visitor's validated email is passed as `replyTo`. The message is rendered as plain text and HTML-escaped HTML; user input is never inserted into raw HTML unescaped. Resend idempotency keys and the application's duplicate store prevent repeated submissions.

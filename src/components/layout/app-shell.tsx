@@ -233,6 +233,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
               <li><Link href="/about" className="hover:text-foreground">About</Link></li>
               <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
               <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+              <li><a href="mailto:hello@syntv.online" className="hover:text-foreground">hello@syntv.online</a></li>
               <li><Link href="/stats" className="hover:text-foreground">Your listening stats</Link></li>
               <li><Link href="/#favorites" className="hover:text-foreground">Favorites</Link></li>
             </ul>
