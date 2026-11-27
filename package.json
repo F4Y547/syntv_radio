@@ -20,7 +20,8 @@
     "db:generate": "npx prisma@6.19.2 generate",
     "db:migrate": "npx prisma@6.19.2 migrate deploy",
     "db:migrate:dev": "npx prisma@6.19.2 migrate dev",
-    "db:studio": "npx prisma@6.19.2 studio"
+    "db:studio": "npx prisma@6.19.2 studio",
+    "db:bootstrap-owner": "node scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
