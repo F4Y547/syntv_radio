@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Play, Pause, Heart, Radio, LoaderCircle, Signal } from "lucide-react";
 import type { Station } from "@/types/station";
+import { displayTag } from "@/lib/normalize";
 import { usePlayer } from "@/components/player/player-provider";
 import { useListenerCounts } from "@/components/listeners/listener-counts-provider";
 
@@ -97,7 +98,7 @@ export function StationCard({ station }: StationCardProps) {
                 key={tag}
                 className="max-w-[120px] truncate rounded-full border border-border/80 bg-foreground/[0.03] px-2 py-0.5 text-[11px] text-foreground-muted"
               >
-                {tag}
+                {displayTag(tag)}
               </span>
             ))}
             {station.bitrate > 0 && (

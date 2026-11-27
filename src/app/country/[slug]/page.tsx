@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Globe2, Radio } from "lucide-react";
 import { FALLBACK_COUNTRIES, FALLBACK_TAGS, getCachedCountries, getCachedTags, getCountryBySlug, getCountryStations } from "@/lib/seo/data";
+import { displayTag } from "@/lib/normalize";
 import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
@@ -48,16 +49,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function topTags(stations: Station[], limit = 10) {
-  const counts = new Map<string, number>();
+function topTags(stations: Station[], limit = 10): [string, number][] {
+  const counts = new Map<string, { label: string; count: number }>();
   for (const station of stations) {
     for (const tag of station.tags) {
-      const normalized = tag.trim().toLowerCase();
-      if (!normalized) continue;
-      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+      const label = displayTag(tag);
+      if (!label) continue;
+      const key = label.toLowerCase();
+      const existing = counts.get(key);
+      if (existing) existing.count += 1;
+      else counts.set(key, { label, count: 1 });
     }
   }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  return [...counts.values()]
+    .map(({ label, count }) => [label, count] as [string, number])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit);
 }
 
 export default async function CountryPage({ params }: Props) {
@@ -249,8 +256,8 @@ export default async function CountryPage({ params }: Props) {
         </div>
         <div className="flex flex-wrap gap-2">
           {popularGenres.map((g) => (
-            <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm capitalize text-foreground-muted hover:border-primary/30 hover:text-foreground">
-              {g.name}
+            <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm text-foreground-muted hover:border-primary/30 hover:text-foreground">
+              {displayTag(g.name)}
             </Link>
           ))}
         </div>

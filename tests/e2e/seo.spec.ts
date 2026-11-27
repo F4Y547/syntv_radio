@@ -46,7 +46,8 @@ for (const route of PUBLIC_ROUTES) {
 test("country and genre pages have metadata and canonical", async ({ page }) => {
   await page.goto("/country/US");
   await expect(page).toHaveTitle(/United States|US/i);
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/country\/(US|the-united-states-of-america)$/i);
+  // Canonical country slugs use the normalized display name.
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/country\/(US|united-states|the-united-states-of-america)$/i);
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
 
   await page.goto("/genre/jazz");

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InfoCallout, InfoPage, InfoSection } from "@/components/content/info-page";
+import { getPolicyContactEmail } from "@/lib/contact/public-email";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 
 
@@ -29,12 +30,13 @@ const sections = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const policyEmail = getPolicyContactEmail();
   return (
     <InfoPage
       eyebrow="Legal"
       title="Privacy Policy"
       description="This policy explains what SYNTV RADIO processes when you use the site, what stays in your browser, and the choices available to you."
-      updated="Last updated: November 27, 2026"
+      updated={`Effective: November 27, 2026 · Last updated: November 27, 2026`}
       sections={sections}
       related={
         <div className="space-y-2 text-sm">
@@ -130,8 +132,10 @@ export default function PrivacyPolicyPage() {
             </thead>
             <tbody className="divide-y divide-border/50">
               <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:favorites</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Stations you save.</td></tr>
-              <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:recents</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Recently played stations.</td></tr>
+              <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:recents</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Up to 15 recently played stations.</td></tr>
               <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:volume</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Player volume.</td></tr>
+              <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:visualizer</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Whether the audio visualizer is shown.</td></tr>
+              <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:sleep-minutes</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Your last selected sleep-timer length.</td></tr>
               <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:collections</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Collections you create.</td></tr>
               <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:listening-stats</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Local listening time and session totals.</td></tr>
               <tr><td className="py-2 pr-3 font-mono text-[11px]">syntv-radio:locale</td><td className="py-2 pr-3">localStorage</td><td className="py-2">Your language choice.</td></tr>
@@ -177,11 +181,12 @@ export default function PrivacyPolicyPage() {
           the optional advertising choice.
         </p>
         <p>
-          If advertising is enabled, Google and its advertising partners may use cookies, local storage, device
-          identifiers, IP address, and approximate location to serve personalized or non-personalized ads, measure ad
-          performance, limit repetition, and prevent fraud. Personalized advertising may involve profiling based on
-          your activity across sites. Non-personalized advertising may still use limited data for frequency capping,
-          aggregate reporting, and fraud prevention.
+          If advertising is enabled, Google and other third-party vendors, including Google AdSense and its advertising
+          partners, may use cookies, web beacons, local storage, device identifiers, IP address, and approximate
+          location to serve ads based on your visits to this and other websites, measure ad performance, limit
+          repetition, and prevent fraud. Personalized advertising may involve profiling based on your activity across
+          sites. Non-personalized advertising may still use limited data for frequency capping, aggregate reporting,
+          and fraud prevention.
         </p>
         <p>
           Where required, we will request consent before using optional advertising technologies. Visitors in the
@@ -361,8 +366,18 @@ export default function PrivacyPolicyPage() {
         <p>
           Use the <Link href="/contact">contact form</Link> for privacy questions, deletion requests, station-owner
           reports, copyright concerns, and technical support. Select the topic that best matches your request so it can
-          be routed appropriately. For non-sensitive technical reports, the public GitHub issue tracker linked from
-          the contact page is also available.
+          be routed appropriately. You can also email <a href={`mailto:${policyEmail}`}>{policyEmail}</a>. For
+          non-sensitive technical reports, the public GitHub issue tracker linked from the contact page is also
+          available.
+        </p>
+        <p>
+          You can change advertising and analytics choices at any time with <strong>Cookie preferences</strong> in the
+          footer. Depending on where you live, you may also be able to opt out of personalized advertising through{" "}
+          <a href="https://www.google.com/settings/ads" rel="noopener noreferrer" target="_blank">
+            Google Ads Settings
+          </a>{" "}
+          or industry opt-out pages. Browser settings can block or delete cookies; blocking necessary storage may
+          prevent parts of the player from working.
         </p>
         <p>
           This policy is provided for transparency. It is not legal advice, and it does not create rights beyond those

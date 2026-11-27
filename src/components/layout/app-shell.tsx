@@ -16,6 +16,8 @@ import {
   Search,
   Shield,
   FileText,
+  BookOpen,
+  Send,
   Clock3,
   X,
   ChevronRight,
@@ -56,6 +58,8 @@ const moreLinks = [
   { href: "/genres", icon: ListMusic, label: "Genres" },
   { href: "/#recents", icon: Clock3, label: "Recently played" },
   { href: "/contact", icon: Mail, label: "Contact" },
+  { href: "/guides", icon: BookOpen, label: "Radio guides" },
+  { href: "/submit", icon: Send, label: "Submit a station" },
   { href: "/about", icon: Info, label: "About" },
   { href: "/privacy-policy", icon: Shield, label: "Privacy policy" },
   { href: "/terms", icon: FileText, label: "Terms and conditions" },
@@ -237,7 +241,9 @@ function ShellContent({
             <p className="font-semibold text-foreground">Information</p>
             <ul className="mt-2 space-y-1.5">
               <li><Link href="/about" className="hover:text-foreground">About</Link></li>
+              <li><Link href="/guides" className="hover:text-foreground">Radio guides</Link></li>
               <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
+              <li><Link href="/submit" className="hover:text-foreground">Submit a station</Link></li>
               <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
               {publicContactEmail ? (
                 <li>
@@ -251,8 +257,9 @@ function ShellContent({
           <div>
             <p className="font-semibold text-foreground">Legal</p>
             <ul className="mt-2 space-y-1.5">
+              <li><Link href="/privacy" className="hover:text-foreground">Privacy</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-foreground">Terms &amp; Conditions</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground">Terms &amp; DMCA</Link></li>
               <li><Link href="/disclaimer" className="hover:text-foreground">Disclaimer</Link></li>
               <li>
                 <button

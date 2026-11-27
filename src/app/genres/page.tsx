@@ -3,6 +3,7 @@ import { ArrowRight, Music2, Radio, Search } from "lucide-react";
 import { getCachedTags } from "@/lib/seo/data";
 import { jsonLd } from "@/lib/seo/json-ld";
 import { genreSlug } from "@/lib/seo/slugs";
+import { displayTag } from "@/lib/normalize";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 
@@ -115,11 +116,11 @@ export default async function GenresPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-display text-lg font-semibold capitalize text-foreground group-hover:text-primary">
-                      {tag.name}
+                    <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
+                      {displayTag(tag.name)}
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {tag.stationCount.toLocaleString()} stations tagged {tag.name}
+                      {tag.stationCount.toLocaleString()} stations tagged {displayTag(tag.name)}
                     </p>
                   </div>
                   <ArrowRight size={17} className="text-muted-foreground group-hover:text-primary" aria-hidden="true" />
@@ -153,7 +154,7 @@ export default async function GenresPage() {
                 href={`/genre/${genreSlug(tag.name)}`}
                 className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/25 px-3.5 py-2.5 text-sm transition hover:border-primary/30 hover:text-primary"
               >
-                <span className="capitalize text-foreground">{tag.name}</span>
+                <span className="text-foreground">{displayTag(tag.name)}</span>
                 <span className="text-xs text-muted-foreground">{tag.stationCount.toLocaleString()}</span>
               </Link>
             ))}

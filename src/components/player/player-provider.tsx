@@ -63,6 +63,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldAutoReconnectRef = useRef(false);
+  const activeStreamUrlRef = useRef<string | null>(null);
+  const fallbackUsedRef = useRef(false);
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +131,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     clearReconnectTimer();
     if (!isReconnect) {
       reconnectAttemptsRef.current = 0;
+      fallbackUsedRef.current = false;
       void getPlaybackTracker().stop("switch");
     }
     setError(null);
@@ -140,8 +143,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     );
     if (candidates.length === 0) {
       if (requestId === playRequestRef.current) {
+        activeStreamUrlRef.current = null;
         setStatusSafe("error");
-        setError("This station does not have a playable stream URL.");
+        setError("Stream unavailable — this station does not have a playable stream URL.");
         isSwitchingRef.current = false;
         shouldAutoReconnectRef.current = false;
       }
@@ -155,7 +159,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         if (requestId !== playRequestRef.current) return false;
         const streamUrl = candidates[i];
         try {
+          if (i > 0) fallbackUsedRef.current = true;
           audio.pause();
+          activeStreamUrlRef.current = streamUrl;
           audio.src = streamUrl;
           audio.load();
           await audio.play();
@@ -169,8 +175,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           if (requestId !== playRequestRef.current) return false;
           console.error("Playback attempt failed", streamUrl, playError);
           if (i === candidates.length - 1) {
+            activeStreamUrlRef.current = null;
             setStatusSafe("error");
-            setError("Unable to play this stream. It may be offline, blocked, or unavailable in your browser.");
+            setError("Stream unavailable. The station may be offline, geo-restricted, or using a format your browser cannot play.");
             void getPlaybackTracker().stop("play-error");
             return false;
           }
@@ -217,7 +224,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     } catch {
       if (isSwitchingRef.current) return;
       setStatusSafe("error");
-      setError("Unable to resume playback. Try again or choose another station.");
+      setError("Stream unavailable. Unable to resume playback — try again or choose another station.");
       void getPlaybackTracker().stop("resume-error");
     }
   }, [clearReconnectTimer, setStatusSafe]);
@@ -254,7 +261,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (attempt >= MAX_AUTO_RECONNECTS) {
       shouldAutoReconnectRef.current = false;
       setStatusSafe("error");
-      setError("Stream connection lost. Please retry or choose another station.");
+      setError("Stream unavailable — connection lost. Please retry or choose another station.");
       void getPlaybackTracker().stop("reconnect-exhausted");
       return;
     }
@@ -274,7 +281,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         } else if (!ok) {
           shouldAutoReconnectRef.current = false;
           setStatusSafe("error");
-          setError("Stream connection lost. Please retry or choose another station.");
+          setError("Stream unavailable — connection lost. Please retry or choose another station.");
           void getPlaybackTracker().stop("reconnect-failed");
         }
       })();
@@ -283,6 +290,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;
   }, [scheduleReconnect]);
+
+  /**
+   * Media errors are asynchronous: prefer the resolved URL once when the
+   * browser is still on a fallback/original URL, then use normal retries.
+   */
+  const handleStreamError = useCallback((reason: string) => {
+    const station = currentStationRef.current;
+    const audio = audioRef.current;
+    if (!station || !audio || isSwitchingRef.current || !shouldAutoReconnectRef.current) return;
+
+    const resolved = station.urlResolved;
+    const active = activeStreamUrlRef.current || audio.currentSrc || audio.src;
+    if (!fallbackUsedRef.current && resolved && active && active !== resolved) {
+      fallbackUsedRef.current = true;
+      void startPlaybackInternal(station, true);
+      return;
+    }
+    scheduleReconnectRef.current(reason);
+  }, [startPlaybackInternal]);
 
   const clearSleepTimer = useCallback(() => setSleepTimerEnd(null), []);
   const setSleepTimer = useCallback((minutes: number) => {
@@ -446,7 +472,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         onError={() => {
           if (isSwitchingRef.current) return;
           void getPlaybackTracker().stop("error");
-          scheduleReconnect("audio-error");
+          handleStreamError("audio-error");
         }}
       />
     </PlayerContext.Provider>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { InfoCallout, InfoPage, InfoSection } from "@/components/content/info-page";
-import { getPublicContactEmail } from "@/lib/contact/public-email";
+import { getPolicyContactEmail, getPublicContactEmail } from "@/lib/contact/public-email";
 import { jsonLd } from "@/lib/seo/json-ld";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
@@ -65,6 +65,7 @@ export default async function ContactPage({ searchParams }: Props) {
   const topic = typeof params.topic === "string" ? params.topic.slice(0, 40) : undefined;
   const station = typeof params.station === "string" ? params.station.slice(0, 200) : "";
   const publicEmail = getPublicContactEmail();
+  const policyEmail = getPolicyContactEmail();
 
   return (
     <>
@@ -99,9 +100,11 @@ export default async function ContactPage({ searchParams }: Props) {
               </p>
             ) : (
               <p>
-                SYNTV RADIO does not publish a phone number, postal address, company registration number, or unverified
-                email address. The form below is the primary contact channel. For non-sensitive technical reports, a
-                public GitHub issue tracker is also available.
+                The form below is the primary contact channel. You can also write to{" "}
+                <a href={`mailto:${policyEmail}`} className="text-primary hover:underline">{policyEmail}</a> for general
+                questions, legal notices, and station requests. SYNTV RADIO does not publish a phone number, postal
+                address, or company registration number. For non-sensitive technical reports, a public GitHub issue
+                tracker is also available.
               </p>
             )}
           </InfoCallout>

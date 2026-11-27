@@ -4,6 +4,10 @@ import { ensureLocalStorageMigrated } from "./migrate";
 const FAVORITES_KEY = "syntv-radio:favorites";
 const RECENTS_KEY = "syntv-radio:recents";
 const VOLUME_KEY = "syntv-radio:volume";
+const VISUALIZER_KEY = "syntv-radio:visualizer";
+const SLEEP_MINUTES_KEY = "syntv-radio:sleep-minutes";
+export const MAX_RECENTS = 15;
+const ALLOWED_SLEEP_MINUTES = [15, 30, 45, 60] as const;
 
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -44,7 +48,7 @@ export function getRecents(): Station[] {
 export function addRecent(station: Station): Station[] {
   ensureLocalStorageMigrated();
   const recents = getRecents().filter((item) => item.id !== station.id);
-  const next = [station, ...recents].slice(0, 20);
+  const next = [station, ...recents].slice(0, MAX_RECENTS);
   localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
   return next;
 }
@@ -59,6 +63,30 @@ export function getVolume(): number {
 export function setVolume(volume: number) {
   ensureLocalStorageMigrated();
   localStorage.setItem(VOLUME_KEY, String(Math.min(1, Math.max(0, volume))));
+}
+
+export function getVisualizerPreference(): boolean {
+  if (typeof window === "undefined") return false;
+  ensureLocalStorageMigrated();
+  return localStorage.getItem(VISUALIZER_KEY) === "true";
+}
+
+export function setVisualizerPreference(visible: boolean) {
+  ensureLocalStorageMigrated();
+  localStorage.setItem(VISUALIZER_KEY, String(visible));
+}
+
+export function getSleepMinutes(): number | null {
+  if (typeof window === "undefined") return null;
+  ensureLocalStorageMigrated();
+  const value = Number(localStorage.getItem(SLEEP_MINUTES_KEY));
+  return ALLOWED_SLEEP_MINUTES.find((minutes) => minutes === value) ?? null;
+}
+
+export function setSleepMinutes(minutes: number) {
+  if (!ALLOWED_SLEEP_MINUTES.some((value) => value === minutes)) return;
+  ensureLocalStorageMigrated();
+  localStorage.setItem(SLEEP_MINUTES_KEY, String(minutes));
 }
 
 const COLLECTIONS_KEY = "syntv-radio:collections";

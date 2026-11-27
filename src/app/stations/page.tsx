@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Globe2, Music2, Radio, Search } from "lucide-react";
 import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
+import { displayTag } from "@/lib/normalize";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/seo/data";
 import { StationCard } from "@/components/station/station-card";
@@ -127,7 +128,7 @@ export default async function StationsDirectoryPage() {
         <div className="flex flex-wrap gap-2">
           {topTags.map((t) => (
             <Link key={t.name} href={`/genre/${genreSlug(t.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm text-foreground-muted hover:border-primary/30 hover:text-foreground">
-              {t.name}
+              {displayTag(t.name)}
             </Link>
           ))}
         </div>

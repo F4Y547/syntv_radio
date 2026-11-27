@@ -20,6 +20,13 @@ import { Equalizer } from "./equalizer";
 import { CanvasVisualizer } from "./canvas-visualizer";
 import { useListenerCounts } from "@/components/listeners/listener-counts-provider";
 import { useFocusTrap } from "@/lib/use-focus-trap";
+import { displayTag } from "@/lib/normalize";
+import {
+  getSleepMinutes,
+  getVisualizerPreference,
+  setSleepMinutes,
+  setVisualizerPreference,
+} from "@/lib/storage/preferences";
 
 export function PlayerBar() {
   const {
@@ -43,7 +50,13 @@ export function PlayerBar() {
   const [expandedSleepMenu, setExpandedSleepMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null);
+  const [preferredSleepMinutes, setPreferredSleepMinutes] = useState<number | null>(null);
   const [showViz, setShowViz] = useState(false);
+  const toggleViz = () => {
+    const next = !showViz;
+    setShowViz(next);
+    setVisualizerPreference(next);
+  };
   const [imgFailed, setImgFailed] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -54,6 +67,20 @@ export function PlayerBar() {
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
   const isReconnectNotice = Boolean(error) && isLoading && /reconnecting|interrupted/i.test(error ?? "");
+  const compactMeta = currentStation
+    ? [
+        currentStation.country,
+        currentStation.tags?.[0] ? displayTag(currentStation.tags[0]) : null,
+        currentStation.bitrate > 0 ? `${currentStation.bitrate} kbps` : null,
+        currentStation.codec || null,
+      ].filter(Boolean).join(" · ")
+    : "Explore free live radio from around the world";
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate client-only player preferences
+    setShowViz(getVisualizerPreference());
+    setPreferredSleepMinutes(getSleepMinutes());
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset image fallback when station changes
@@ -156,10 +183,10 @@ export function PlayerBar() {
                     {typeof currentListeners === "number" && (
                       <span className="hidden shrink-0 text-live/90 sm:inline">· {currentListeners.toLocaleString()} listening</span>
                     )}
-                    <span className="truncate">{[currentStation.country, currentStation.tags?.[0]].filter(Boolean).join(" · ") || "World radio"}</span>
+                    <span className="truncate">{compactMeta || "World radio"}</span>
                   </>
                 ) : (
-                  <span className="truncate">Explore free live radio from around the world</span>
+                  <span className="truncate">{compactMeta}</span>
                 )}
               </div>
             </div>
@@ -206,7 +233,7 @@ export function PlayerBar() {
           <div className="hidden items-center justify-end gap-2 md:flex lg:gap-3">
             <button
               type="button"
-              onClick={() => setShowViz((v) => !v)}
+              onClick={toggleViz}
               className={`inline-flex h-9 rounded-full px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${showViz ? "bg-primary-soft text-primary" : "text-foreground-muted hover:bg-foreground/[0.05] hover:text-foreground"}`}
               aria-pressed={showViz}
               aria-label="Viz"
@@ -226,9 +253,11 @@ export function PlayerBar() {
               </button>
               {sleepMenuOpen && (
                 <div className="absolute bottom-full right-0 mb-2 w-40 rounded-xl border border-border bg-surface-elevated p-2 shadow-[var(--shadow-lg)]">
-                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Sleep timer</p>
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    Sleep timer{preferredSleepMinutes ? ` (last used: ${preferredSleepMinutes}m)` : ""}
+                  </p>
                   {[15, 30, 45, 60].map((m) => (
-                    <button key={m} type="button" onClick={() => { setSleepTimer(m); setSleepMenuOpen(false); }} className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-foreground hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{m} minutes</button>
+                    <button key={m} type="button" onClick={() => { setSleepTimer(m); setSleepMinutes(m); setSleepMenuOpen(false); }} className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-foreground hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{m} minutes</button>
                   ))}
                   {sleepTimerEnd && (
                     <button type="button" onClick={() => { clearSleepTimer(); setSleepMenuOpen(false); }} className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-error hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Turn off</button>
@@ -283,9 +312,12 @@ export function PlayerBar() {
                   {[currentStation.country, currentStation.language].filter(Boolean).join(" · ") || "Global station"}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-                  {currentStation.codec && <span className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">{currentStation.codec}</span>}
-                  {currentStation.bitrate ? <span className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">{currentStation.bitrate} kbps</span> : null}
-                  {currentStation.tags?.slice(0, 3).map((t) => <span key={t} className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">{t}</span>)}
+                  {currentStation.country && <span className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">Country: {currentStation.country}</span>}
+                  {currentStation.codec && <span className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">Codec: {currentStation.codec}</span>}
+                  {currentStation.bitrate ? <span className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">Bitrate: {currentStation.bitrate} kbps</span> : null}
+                  {currentStation.tags?.slice(0, 3).map((t) => (
+                    <span key={t} className="rounded-full border border-border/70 bg-foreground/[0.03] px-2.5 py-1">Genre: {displayTag(t)}</span>
+                  ))}
                 </div>
               </div>
 
@@ -338,9 +370,12 @@ export function PlayerBar() {
                   </button>
                   {expandedSleepMenu && (
                     <div className="absolute bottom-full left-1/2 mb-2 w-44 -translate-x-1/2 rounded-xl border border-border bg-surface-elevated p-2 shadow-[var(--shadow-lg)]">
-                      <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Sleep timer {sleepRemaining ? `(${sleepRemaining})` : ""}</p>
+                      <p className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                        Sleep timer {sleepRemaining ? `(${sleepRemaining})` : ""}
+                        {preferredSleepMinutes ? ` · last used: ${preferredSleepMinutes}m` : ""}
+                      </p>
                       {[15, 30, 45, 60].map((m) => (
-                        <button key={m} type="button" onClick={() => { setSleepTimer(m); setExpandedSleepMenu(false); }} className="block w-full rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{m} minutes</button>
+                        <button key={m} type="button" onClick={() => { setSleepTimer(m); setSleepMinutes(m); setExpandedSleepMenu(false); }} className="block w-full rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{m} minutes</button>
                       ))}
                       {sleepTimerEnd && (
                         <button type="button" onClick={() => { clearSleepTimer(); setExpandedSleepMenu(false); }} className="block w-full rounded-lg px-2 py-2 text-left text-sm text-error hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Turn off</button>

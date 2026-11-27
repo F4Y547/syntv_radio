@@ -1,6 +1,17 @@
-import { getContactDeliveryConfig } from "./config";
+import { getContactDeliveryConfig, isValidEmail } from "./config";
 
 export const OFFICIAL_CONTACT_EMAIL = "hello@syntv.online";
+
+/**
+ * Placeholder shown on legal/information pages until the owner configures a
+ * public inbox. Set NEXT_PUBLIC_CONTACT_EMAIL to the real address before launch.
+ */
+export const POLICY_CONTACT_EMAIL_FALLBACK = "contact@syntv.online";
+
+export function getPolicyContactEmail(env: Env = process.env): string {
+  const configured = env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  return configured && isValidEmail(configured) ? configured : POLICY_CONTACT_EMAIL_FALLBACK;
+}
 
 type Env = Record<string, string | undefined>;
 

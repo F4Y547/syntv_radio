@@ -2,16 +2,37 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Globe2, Headphones, Heart, ListMusic, Radio, Search, Smartphone } from "lucide-react";
 import { StationBrowser } from "@/components/station/station-browser";
-import { StationGridSkeleton } from "@/components/station/station-card-skeleton";
+import { StationCard } from "@/components/station/station-card";
 import { FaqList } from "@/components/content/faq-list";
-import { getCachedCountries, getCachedTags } from "@/lib/seo/data";
+import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/seo/data";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
+import { displayTag } from "@/lib/normalize";
+import type { Station } from "@/types/station";
 
-async function BrowseDirectoryLinks() {
-  const [countries, tags] = await Promise.all([
-    getCachedCountries().catch(() => []),
-    getCachedTags().catch(() => []),
-  ]);
+interface DirectoryLinksProps {
+  countries: { name: string; code: string; stationCount: number }[];
+  tags: { name: string; stationCount: number }[];
+}
+
+/** Static shell content: real stations are present in the initial HTML. */
+function FeaturedStationsPreview({ stations }: { stations: Station[] }) {
+  if (stations.length === 0) return null;
+  return (
+    <section aria-labelledby="featured-stations" className="space-y-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Featured stations</p>
+      <h2 id="featured-stations" className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        Live radio from around the world
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {stations.slice(0, 6).map((station) => (
+          <StationCard key={`preview-${station.id}`} station={station} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BrowseDirectoryLinks({ countries, tags }: DirectoryLinksProps) {
   const topCountries = countries.slice(0, 12);
   const topGenres = tags.slice(0, 12);
   if (topCountries.length === 0 && topGenres.length === 0) return null;
@@ -54,8 +75,8 @@ async function BrowseDirectoryLinks() {
           </div>
           <div className="flex flex-wrap gap-2">
             {topGenres.map((g) => (
-              <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm capitalize text-foreground-muted hover:border-primary/30 hover:text-foreground">
-                {g.name}
+              <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm text-foreground-muted hover:border-primary/30 hover:text-foreground">
+                {displayTag(g.name)}
               </Link>
             ))}
           </div>
@@ -101,22 +122,25 @@ const listeningFeatures = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Server-render the first page of real directory data so crawlers and
+  // first-time visitors see stations immediately instead of a loading shell.
+  const [countries, tags, stations] = await Promise.all([
+    getCachedCountries().catch(() => []),
+    getCachedTags().catch(() => []),
+    getCachedTopStations(24).catch(() => []),
+  ]);
+
   return (
     <div className="space-y-12">
-      <Suspense
-        fallback={
-          <div className="space-y-10" role="status" aria-label="Loading">
-            <div className="h-[420px] rounded-[2rem] border border-border/70 bg-surface/25 skeleton" />
-            <StationGridSkeleton count={6} />
-          </div>
-        }
-      >
-        <StationBrowser />
+      <Suspense fallback={<FeaturedStationsPreview stations={stations} />}>
+        <StationBrowser
+          initialStations={stations}
+          initialCountries={countries}
+          initialTags={tags}
+        />
       </Suspense>
-      <Suspense fallback={null}>
-        <BrowseDirectoryLinks />
-      </Suspense>
+      <BrowseDirectoryLinks countries={countries} tags={tags} />
 
       <section aria-labelledby="discover-heading" className="space-y-6">
         <div className="max-w-3xl">

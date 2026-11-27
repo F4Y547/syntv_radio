@@ -22,9 +22,16 @@ interface Filters {
   languages: { name: string; stationCount: number }[];
 }
 
+export interface StationBrowserProps {
+  /** Server-rendered directory data, passed in so the first HTML has content. */
+  initialStations?: Station[];
+  initialCountries?: Filters["countries"];
+  initialTags?: Filters["tags"];
+}
+
 const PAGE_SIZE = 24;
 
-export function StationBrowser() {
+export function StationBrowser({ initialStations = [], initialCountries = [], initialTags = [] }: StationBrowserProps) {
   const { favorites, recents } = usePlayer();
   const router = useRouter();
   const pathname = usePathname();
@@ -42,14 +49,19 @@ export function StationBrowser() {
   const [language, setLanguage] = useState(initialLanguage);
   const [sort, setSort] = useState(initialSort);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [stations, setStations] = useState<Station[]>([]);
-  const [filters, setFilters] = useState<Filters>({ countries: [], tags: [], languages: [] });
-  const [loading, setLoading] = useState(true);
+  const [stations, setStations] = useState<Station[]>(initialStations);
+  const [filters, setFilters] = useState<Filters>({
+    countries: initialCountries,
+    tags: initialTags,
+    languages: [],
+  });
+  const [loading, setLoading] = useState(initialStations.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [hasNext, setHasNext] = useState(false);
+  const [hasNext, setHasNext] = useState(initialStations.length === PAGE_SIZE);
+  const skipInitialFetchRef = useRef(initialStations.length > 0);
   const filterRef = useRef<HTMLDivElement | null>(null);
   useFocusTrap(filtersOpen, filterRef);
 
@@ -138,6 +150,15 @@ export function StationBrowser() {
   useEffect(() => {
     const controller = new AbortController();
     async function loadStations() {
+      // Reuse the server-rendered first page when the view is still the default
+      // one; any changed filter or query still takes the live API path.
+      const isDefaultView = !debouncedQuery && !country && !tag && !language && sort === "popular";
+      if (skipInitialFetchRef.current && isDefaultView) {
+        skipInitialFetchRef.current = false;
+        setLoading(false);
+        return;
+      }
+      skipInitialFetchRef.current = false;
       setLoading(true);
       setError(null);
       try {

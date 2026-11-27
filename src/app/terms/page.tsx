@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { InfoCallout, InfoPage, InfoSection } from "@/components/content/info-page";
+import { getPolicyContactEmail } from "@/lib/contact/public-email";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata = infoPageMetadata({
   title: "Terms and Conditions",
   description:
-    "The terms that apply when you use SYNTV RADIO, including acceptable use, third-party radio streams, intellectual property, and liability.",
+    "Terms of use for SYNTV RADIO, including acceptable use, third-party live streams, intellectual property, liability, and our DMCA stream-removal request process.",
   path: "/terms",
 });
 
@@ -21,12 +22,14 @@ const sections = [
   { id: "liability", title: "Limitation of liability" },
   { id: "external-links", title: "External links and advertising" },
   { id: "copyright", title: "Copyright and content reports" },
+  { id: "dmca", title: "DMCA / stream-removal requests" },
   { id: "governing-law", title: "Governing law" },
   { id: "changes", title: "Changes to these terms" },
   { id: "contact", title: "Contact" },
 ];
 
 export default function TermsPage() {
+  const policyEmail = getPolicyContactEmail();
   return (
     <InfoPage
       eyebrow="Legal"
@@ -206,6 +209,43 @@ export default function TermsPage() {
           other directories. We may ask for additional information and may forward a report to the station or
           directory data source where appropriate.
         </p>
+      </InfoSection>
+
+      <InfoSection id="dmca" title="DMCA / stream-removal requests">
+        <p>
+          SYNTV RADIO indexes and links/streams third-party live audio broadcasts. We do not host the audio files, and
+          we do not claim to hold broadcasting, recording, performance, or music licences for the streams listed in our
+          directory. If you are a broadcaster or rights holder and believe a listing should be changed or removed, send
+          a written notice through the <Link href="/contact?topic=copyright">contact form</Link> or to{" "}
+          <a href={`mailto:${policyEmail}`}>{policyEmail}</a>.
+        </p>
+        <p>To help us act on a request, include:</p>
+        <ul>
+          <li>Your name, the organization you represent (if any), and a reliable contact email.</li>
+          <li>The exact SYNTV RADIO listing URL or station ID and the specific stream or material involved.</li>
+          <li>A description of the copyrighted work or other right you believe is affected.</li>
+          <li>
+            A good-faith statement that the listing is not authorized by the rights holder, its agent, or the law.
+          </li>
+          <li>
+            A statement, under penalty of perjury where applicable, that the information in your notice is accurate and
+            that you are the rights holder or authorized to act for them.
+          </li>
+          <li>Your physical or electronic signature, and whether you request removal, correction, or a stream-block.</li>
+        </ul>
+        <p>
+          We review notices, may ask for clarifying information, and may remove or update a directory listing or disable
+          a stream URL on this site. Removing a listing from SYNTV RADIO does not remove the station&rsquo;s own stream
+          from its website or other directories. Where appropriate, we may forward the notice to the station or the
+          community directory that supplied the metadata. A counter-notice can be sent to the same address if you believe
+          a listing was removed in error; we will review it and may restore the listing where applicable law allows.
+        </p>
+        <InfoCallout title="Not legal advice" tone="info">
+          <p>
+            This process is a practical contact route for rights holders. It is not a substitute for advice from a
+            qualified lawyer and does not create rights beyond applicable law.
+          </p>
+        </InfoCallout>
       </InfoSection>
 
       <InfoSection id="governing-law" title="Governing law">

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/seo/data";
+import { guides } from "@/lib/content/guides";
 import { isIndexableGenre } from "@/lib/seo/genre-editorial";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { siteUrl } from "@/lib/seo/site";
@@ -13,7 +14,10 @@ const staticPages: MetadataRoute.Sitemap = [
   { url: `${siteUrl}/trending`, changeFrequency: "daily", priority: 0.8 },
   { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
   { url: `${siteUrl}/faq`, changeFrequency: "monthly", priority: 0.6 },
+  { url: `${siteUrl}/guides`, changeFrequency: "monthly", priority: 0.7 },
   { url: `${siteUrl}/contact`, changeFrequency: "monthly", priority: 0.6 },
+  { url: `${siteUrl}/submit`, changeFrequency: "monthly", priority: 0.5 },
+  { url: `${siteUrl}/privacy`, changeFrequency: "yearly", priority: 0.4 },
   { url: `${siteUrl}/privacy-policy`, changeFrequency: "yearly", priority: 0.4 },
   { url: `${siteUrl}/terms`, changeFrequency: "yearly", priority: 0.4 },
   { url: `${siteUrl}/disclaimer`, changeFrequency: "yearly", priority: 0.4 },
@@ -21,6 +25,14 @@ const staticPages: MetadataRoute.Sitemap = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [...staticPages];
+
+  for (const guide of guides) {
+    entries.push({
+      url: `${siteUrl}/guides/${guide.slug}`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    });
+  }
 
   try {
     const [countries, tags, stations] = await Promise.all([

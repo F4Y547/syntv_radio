@@ -1,4 +1,10 @@
 import type { Station, StationSearchParams } from "@/types/station";
+import {
+  normalizeCountries,
+  normalizeCountryName,
+  normalizeTagCounts,
+  normalizeTags,
+} from "@/lib/normalize";
 
 interface RadioBrowserStation {
   stationuuid: string;
@@ -33,14 +39,10 @@ function normalizeStation(station: RadioBrowserStation): Station {
     homepage: station.homepage || "",
     favicon: station.favicon || "",
     tags: station.tags
-      ? station.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-          .slice(0, 8)
+      ? normalizeTags(station.tags.split(",")).slice(0, 8)
       : [],
-    country: station.country || "",
-    countryCode: station.countrycode || "",
+    country: normalizeCountryName(station.country, station.countrycode),
+    countryCode: (station.countrycode || "").toUpperCase(),
     state: station.state || "",
     language: station.language || "",
     votes: Number(station.votes) || 0,
@@ -108,18 +110,21 @@ export async function searchStations(
 export async function getCountries(): Promise<{ name: string; code: string; stationCount: number }[]> {
   const data = await fetchJson<Array<{ name: string; iso_3166_1: string; stationcount: number }>>("/countries", 3600);
   if (!data) return [];
-  return data
-    .filter((c) => c.iso_3166_1 && c.name)
-    .map((c) => ({ name: c.name, code: c.iso_3166_1, stationCount: c.stationcount }))
-    .sort((a, b) => b.stationCount - a.stationCount);
+  return normalizeCountries(
+    data
+      .filter((c) => c.iso_3166_1 && c.name)
+      .map((c) => ({ name: c.name, code: c.iso_3166_1, stationCount: c.stationcount })),
+  ).sort((a, b) => b.stationCount - a.stationCount);
 }
 
 export async function getTags(): Promise<{ name: string; stationCount: number }[]> {
   const data = await fetchJson<Array<{ name: string; stationcount: number }>>("/tags?limit=60&order=stationcount&reverse=true", 3600);
   if (!data) return [];
-  return data
-    .filter((t) => t.name && t.stationcount > 10)
-    .map((t) => ({ name: t.name, stationCount: t.stationcount }));
+  return normalizeTagCounts(
+    data
+      .filter((t) => t.name && t.stationcount > 10)
+      .map((t) => ({ name: t.name, stationCount: t.stationcount })),
+  ).sort((a, b) => b.stationCount - a.stationCount);
 }
 
 export async function getLanguages(): Promise<{ name: string; stationCount: number }[]> {

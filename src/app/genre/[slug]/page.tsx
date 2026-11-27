@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Music2, Radio } from "lucide-react";
 import { FALLBACK_COUNTRIES, FALLBACK_TAGS, getCachedCountries, getCachedTags, getGenreBySlug, getGenreStations } from "@/lib/seo/data";
+import { displayTag, normalizeCountryName } from "@/lib/normalize";
 import { getGenreEditorial } from "@/lib/seo/genre-editorial";
 import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
@@ -63,7 +64,7 @@ function countryCounts(stations: Station[]) {
       existing.count += 1;
     } else {
       counts.set(key, {
-        name: station.country || station.countryCode,
+        name: normalizeCountryName(station.country, station.countryCode) || station.countryCode,
         code: station.countryCode,
         count: 1,
       });
@@ -269,8 +270,8 @@ export default async function GenrePage({ params }: Props) {
               href={`/country/${countrySlug(c.name, c.code)}`}
               className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm text-foreground-muted hover:border-primary/30 hover:text-foreground"
             >
-              {c.name}
-              {"count" in c && <span className="ml-1.5 text-xs text-muted-foreground">{c.count}</span>}
+              <span>{c.name}</span>
+              {"count" in c && <span className="ml-1.5 text-xs text-muted-foreground">· {c.count}</span>}
             </Link>
           ))}
         </div>
@@ -288,8 +289,8 @@ export default async function GenrePage({ params }: Props) {
         </div>
         <div className="flex flex-wrap gap-2">
           {popularGenres.map((g) => (
-            <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm capitalize text-foreground-muted hover:border-primary/30 hover:text-foreground">
-              {g.name}
+            <Link key={g.name} href={`/genre/${genreSlug(g.name)}`} className="rounded-full border border-border bg-foreground/[0.03] px-3 py-1.5 text-sm text-foreground-muted hover:border-primary/30 hover:text-foreground">
+              {displayTag(g.name)}
             </Link>
           ))}
         </div>
