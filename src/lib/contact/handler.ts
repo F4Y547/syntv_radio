@@ -2,7 +2,7 @@ import { checkRateLimitAsync, rateLimitHeaders } from "../listeners/rate-limit";
 import { getClientIp } from "../listeners/validation";
 import { recordContactSubmission } from "../admin/store";
 import { getContactDeliveryConfig, type ContactDeliveryConfig } from "./config";
-import { createContactDedupeStore, type ContactDedupeStore } from "./dedupe";
+import { createContactDedupeStore, newDedupeToken, type ContactDedupeStore } from "./dedupe";
 import { ContactDeliveryError, deliverContact, type DeliveryDependencies } from "./delivery";
 import { validateContactPayload, type ContactField } from "./validation";
 
@@ -120,7 +120,17 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
       [ip, contact.email, contact.topic, contact.station, contact.message].join("\u0000"),
     );
 
-    if (dedupe.has(idempotencyKey, now())) {
+    const dedupeToken = newDedupeToken();
+    let reserved = false;
+    try {
+      reserved = Boolean(await dedupe.reserve(idempotencyKey, now(), dedupeToken));
+    } catch {
+      // Duplicate protection is best-effort infrastructure, never a user-facing error.
+      console.warn("[contact] duplicate protection unavailable; continuing without a claim");
+      reserved = true;
+    }
+
+    if (!reserved) {
       return json(
         {
           success: false,
@@ -132,6 +142,14 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
       );
     }
 
+    const releaseReservation = async () => {
+      try {
+        await dedupe.release(idempotencyKey, now(), dedupeToken);
+      } catch {
+        console.warn("[contact] could not release duplicate claim");
+      }
+    };
+
     try {
       await deliverContact(config, contact, idempotencyKey, {
         fetchImpl: options.fetchImpl,
@@ -139,6 +157,7 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
         now: options.now,
       });
     } catch (error) {
+      await releaseReservation();
       if (error instanceof ContactDeliveryError) {
         // Provider identity is intentionally omitted from the client response.
         console.warn("[contact] delivery failed:", error.provider);
@@ -156,7 +175,6 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
       );
     }
 
-    dedupe.add(idempotencyKey, now());
     try {
       await recordContactSubmission({
         name: contact.name,

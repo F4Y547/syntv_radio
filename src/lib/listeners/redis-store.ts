@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import { getSharedRedis, type RedisClient } from "../redis/client";
 import { LISTENER_SCOPE, type ListenerAnalytics, type ListenerAnalyticsSnapshot, type ListenerCounts, type ListenerSession, type ListenerStore, type StationListenerCount } from "./types";
 
 const KEY_PREFIX = "syntv:listener";
@@ -108,36 +108,19 @@ local total = redis.call('ZCARD', globalKey)
 return {total, stationCount, stationId, startedAt}
 `;
 
-type RedisClient = Redis;
-
-function getRedis(url: string): RedisClient {
-  const g = globalThis as typeof globalThis & { __syntvRedis?: RedisClient; __syntvRedisUrl?: string };
-  if (g.__syntvRedis && g.__syntvRedisUrl === url) return g.__syntvRedis;
-  if (g.__syntvRedis) {
-    void g.__syntvRedis.quit().catch(() => undefined);
-  }
-  g.__syntvRedis = new Redis(url, {
-    maxRetriesPerRequest: 2,
-    enableReadyCheck: true,
-    lazyConnect: false,
-    connectTimeout: 5000,
-  });
-  g.__syntvRedis.on("error", (err) => {
-    console.error("[listeners][redis]", err.message);
-  });
-  g.__syntvRedisUrl = url;
-  return g.__syntvRedis;
-}
-
 function dayKey(now: number) {
   return new Date(now).toISOString().slice(0, 10);
 }
 
 export class RedisListenerStore implements ListenerStore {
   private redis: RedisClient;
+  private readonly ownsClient: boolean;
 
-  constructor(redisUrl: string) {
-    this.redis = getRedis(redisUrl);
+  constructor(client?: RedisClient) {
+    const redis = client ?? getSharedRedis();
+    if (!redis) throw new Error("REDIS_URL is not configured");
+    this.redis = redis;
+    this.ownsClient = Boolean(client);
   }
 
   private sessionKey(sessionId: string) { return `${KEY_PREFIX}:session:${sessionId}`; }
@@ -203,6 +186,14 @@ export class RedisListenerStore implements ListenerStore {
     await updates.exec();
   }
 
+  private async recordAnalyticsSafely(now: number, totalListeners: number, stationCounts: Record<string, number>, event?: { type: "start" | "stop" | "error"; durationSec?: number }) {
+    try {
+      await this.recordAnalytics(now, totalListeners, stationCounts, event);
+    } catch {
+      console.warn("[listeners] analytics update unavailable; listener state remains usable");
+    }
+  }
+
   async startSession(input: { sessionId: string; stationId: string; now: number; ttlMs: number }) {
     const { sessionId, stationId, now, ttlMs } = input;
     const result = (await this.redis.eval(
@@ -221,7 +212,7 @@ export class RedisListenerStore implements ListenerStore {
     const totalListeners = Number(result[0] ?? 0);
     const stationListeners = Number(result[1] ?? 0);
     const isNew = Number(result[2] ?? 0) === 1;
-    await this.recordAnalytics(now, totalListeners, { [stationId]: stationListeners }, isNew ? { type: "start" } : undefined);
+    await this.recordAnalyticsSafely(now, totalListeners, { [stationId]: stationListeners }, isNew ? { type: "start" } : undefined);
     return { totalListeners, stationListeners };
   }
 
@@ -242,7 +233,7 @@ export class RedisListenerStore implements ListenerStore {
     const active = Number(result[0]) === 1;
     const totalListeners = Number(result[1] ?? 0);
     const stationListeners = Number(result[2] ?? 0);
-    await this.recordAnalytics(now, totalListeners, { [stationId]: stationListeners });
+    await this.recordAnalyticsSafely(now, totalListeners, { [stationId]: stationListeners });
     return { active, totalListeners, stationListeners };
   }
 
@@ -262,9 +253,9 @@ export class RedisListenerStore implements ListenerStore {
     const stationListeners = Number(result[1] ?? 0);
     if (stationId && startedAt > 0) {
       const durationSec = Math.max(0, Math.round((now - startedAt) / 1000));
-      await this.recordAnalytics(now, totalListeners, stationId ? { [stationId]: stationListeners } : {}, { type: input.reason === "error" ? "error" : "stop", durationSec });
+      await this.recordAnalyticsSafely(now, totalListeners, stationId ? { [stationId]: stationListeners } : {}, { type: input.reason === "error" ? "error" : "stop", durationSec });
     } else {
-      await this.recordAnalytics(now, totalListeners, stationId ? { [stationId]: stationListeners } : {}, input.reason === "error" ? { type: "error" } : undefined);
+      await this.recordAnalyticsSafely(now, totalListeners, stationId ? { [stationId]: stationListeners } : {}, input.reason === "error" ? { type: "error" } : undefined);
     }
     return { totalListeners, stationListeners, stationId };
   }
@@ -362,6 +353,6 @@ export class RedisListenerStore implements ListenerStore {
   }
 
   async close() {
-    await this.redis.quit();
+    if (this.ownsClient) await this.redis.quit();
   }
 }

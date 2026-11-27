@@ -1,6 +1,7 @@
 import { listenerConfig } from "./config";
 import { MemoryListenerStore } from "./memory-store";
 import { RedisListenerStore } from "./redis-store";
+import { ResilientListenerStore } from "./resilient-store";
 import type { ListenerStore } from "./types";
 
 let warnedMemory = false;
@@ -8,7 +9,12 @@ let warnedMemory = false;
 function createStore(): ListenerStore {
   const redisUrl = listenerConfig.redisUrl;
   if (redisUrl) {
-    return new RedisListenerStore(redisUrl);
+    try {
+      return new ResilientListenerStore(new RedisListenerStore(), new MemoryListenerStore());
+    } catch {
+      // Do not expose connection details; the local store keeps the site usable.
+      console.warn("[listeners] shared store unavailable; using local listener fallback");
+    }
   }
   if (!warnedMemory && process.env.NODE_ENV === "production") {
     warnedMemory = true;

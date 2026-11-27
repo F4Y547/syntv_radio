@@ -1,6 +1,14 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { getCountries, getTags, searchStations } from "@/lib/api/radio-browser";
+import {
+  getCachedSeoData,
+  SEO_TTL_HOUR_MS,
+  SEO_TTL_MINUTE_MS,
+} from "./cache";
 import { countrySlug, genreSlug } from "./slugs";
+import { PUBLIC_CACHE_TAGS } from "./tags";
+
+export { PUBLIC_CACHE_TAGS };
 
 export const FALLBACK_COUNTRIES = [
   { name: "United States", code: "US", stationCount: 0 },
@@ -35,7 +43,13 @@ function withFallback<T>(items: T[], fallback: readonly T[]): T[] {
 export async function getCountryBySlug(slug: string) {
   "use cache";
   cacheLife("hours");
-  const countries = withFallback(await getCountries(), FALLBACK_COUNTRIES);
+  cacheTag(PUBLIC_CACHE_TAGS.countries);
+  const countries = await getCachedSeoData(
+    "countries",
+    [],
+    SEO_TTL_HOUR_MS,
+    async () => withFallback(await getCountries(), FALLBACK_COUNTRIES),
+  );
   const normalized = slug.toLowerCase();
   return (
     countries.find((c) => countrySlug(c.name, c.code) === normalized) ??
@@ -47,7 +61,13 @@ export async function getCountryBySlug(slug: string) {
 export async function getGenreBySlug(slug: string) {
   "use cache";
   cacheLife("hours");
-  const tags = withFallback(await getTags(), FALLBACK_TAGS);
+  cacheTag(PUBLIC_CACHE_TAGS.genres);
+  const tags = await getCachedSeoData(
+    "tags",
+    [],
+    SEO_TTL_HOUR_MS,
+    async () => withFallback(await getTags(), FALLBACK_TAGS),
+  );
   const normalized = slug.toLowerCase();
   return tags.find((t) => genreSlug(t.name) === normalized) ?? tags.find((t) => t.name.toLowerCase() === normalized) ?? null;
 }
@@ -55,29 +75,59 @@ export async function getGenreBySlug(slug: string) {
 export async function getCountryStations(countryCode: string, limit = 24) {
   "use cache";
   cacheLife("minutes");
-  return searchStations({ country: countryCode, limit, order: "clickcount", reverse: true });
+  cacheTag(PUBLIC_CACHE_TAGS.stations);
+  return getCachedSeoData(
+    "country-stations",
+    [countryCode, limit],
+    SEO_TTL_MINUTE_MS,
+    () => searchStations({ country: countryCode, limit, order: "clickcount", reverse: true }),
+  );
 }
 
 export async function getGenreStations(tag: string, limit = 24) {
   "use cache";
   cacheLife("minutes");
-  return searchStations({ tag, limit, order: "clickcount", reverse: true });
+  cacheTag(PUBLIC_CACHE_TAGS.stations);
+  return getCachedSeoData(
+    "genre-stations",
+    [tag, limit],
+    SEO_TTL_MINUTE_MS,
+    () => searchStations({ tag, limit, order: "clickcount", reverse: true }),
+  );
 }
 
 export async function getCachedCountries() {
   "use cache";
   cacheLife("hours");
-  return withFallback(await getCountries(), FALLBACK_COUNTRIES);
+  cacheTag(PUBLIC_CACHE_TAGS.countries);
+  return getCachedSeoData(
+    "countries",
+    [],
+    SEO_TTL_HOUR_MS,
+    async () => withFallback(await getCountries(), FALLBACK_COUNTRIES),
+  );
 }
 
 export async function getCachedTags() {
   "use cache";
   cacheLife("hours");
-  return withFallback(await getTags(), FALLBACK_TAGS);
+  cacheTag(PUBLIC_CACHE_TAGS.genres);
+  return getCachedSeoData(
+    "tags",
+    [],
+    SEO_TTL_HOUR_MS,
+    async () => withFallback(await getTags(), FALLBACK_TAGS),
+  );
 }
 
 export async function getCachedTopStations(limit = 12) {
   "use cache";
   cacheLife("minutes");
-  return searchStations({ limit, order: "clickcount", reverse: true });
+  cacheTag(PUBLIC_CACHE_TAGS.stations);
+  return getCachedSeoData(
+    "top-stations",
+    [limit],
+    SEO_TTL_MINUTE_MS,
+    () => searchStations({ limit, order: "clickcount", reverse: true }),
+  );
 }
