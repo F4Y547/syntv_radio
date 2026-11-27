@@ -19,6 +19,7 @@ import { GlobalListenerCounter } from "@/components/listeners/global-listener-co
 interface Filters {
   countries: { name: string; code: string; stationCount: number }[];
   tags: { name: string; stationCount: number }[];
+  languages: { name: string; stationCount: number }[];
 }
 
 const PAGE_SIZE = 24;
@@ -31,13 +32,18 @@ export function StationBrowser() {
   const initialQuery = searchParams.get("q") ?? "";
   const initialCountry = searchParams.get("country") ?? "";
   const initialTag = searchParams.get("tag") ?? "";
+  const initialLanguage = searchParams.get("language") ?? "";
+  const initialSort = searchParams.get("sort") ?? "popular";
 
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [country, setCountry] = useState(initialCountry);
   const [tag, setTag] = useState(initialTag);
+  const [language, setLanguage] = useState(initialLanguage);
+  const [sort, setSort] = useState(initialSort);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [stations, setStations] = useState<Station[]>([]);
-  const [filters, setFilters] = useState<Filters>({ countries: [], tags: [] });
+  const [filters, setFilters] = useState<Filters>({ countries: [], tags: [], languages: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -68,11 +74,13 @@ export function StationBrowser() {
 
   const lastStateStr = useRef("");
   useEffect(() => {
-    const stateStr = `${debouncedQuery}|${country}|${tag}`;
+    const stateStr = `${debouncedQuery}|${country}|${tag}|${language}|${sort}`;
     const params = new URLSearchParams();
     if (debouncedQuery) params.set("q", debouncedQuery);
     if (country) params.set("country", country);
     if (tag) params.set("tag", tag);
+    if (language) params.set("language", language);
+    if (sort && sort !== "popular") params.set("sort", sort);
     const next = params.toString();
     const current = searchParams.toString();
     if (stateStr !== lastStateStr.current) {
@@ -81,25 +89,29 @@ export function StationBrowser() {
         router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
       }
     }
-  }, [debouncedQuery, country, tag, pathname, router, searchParams]);
+  }, [debouncedQuery, country, tag, language, sort, pathname, router, searchParams]);
 
-  const stateRef = useRef({ country, tag, debouncedQuery });
+  const stateRef = useRef({ country, tag, language, sort, debouncedQuery });
   useEffect(() => {
-    stateRef.current = { country, tag, debouncedQuery };
-  }, [country, tag, debouncedQuery]);
+    stateRef.current = { country, tag, language, sort, debouncedQuery };
+  }, [country, tag, language, sort, debouncedQuery]);
 
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
     const c = searchParams.get("country") ?? "";
     const tg = searchParams.get("tag") ?? "";
+    const lg = searchParams.get("language") ?? "";
+    const st = searchParams.get("sort") ?? "popular";
     const cur = stateRef.current;
-    const changed = q !== cur.debouncedQuery || c !== cur.country || tg !== cur.tag;
+    const changed = q !== cur.debouncedQuery || c !== cur.country || tg !== cur.tag || lg !== cur.language || st !== cur.sort;
     if (q !== cur.debouncedQuery) {
       setQuery(q);
       setDebouncedQuery(q);
     }
     if (c !== cur.country) setCountry(c);
     if (tg !== cur.tag) setTag(tg);
+    if (lg !== cur.language) setLanguage(lg);
+    if (st !== cur.sort) setSort(st);
     if (changed) setPage(1);
   }, [searchParams]);
 
@@ -109,8 +121,12 @@ export function StationBrowser() {
       try {
         const res = await fetch("/api/filters", { signal: controller.signal });
         if (!res.ok) return;
-        const data = (await res.json()) as Filters;
-        setFilters(data);
+        const data = (await res.json()) as Partial<Filters>;
+        setFilters({
+          countries: Array.isArray(data.countries) ? data.countries : [],
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          languages: Array.isArray(data.languages) ? data.languages : [],
+        });
       } catch {
         // Filters are optional; ignore.
       }
@@ -129,6 +145,20 @@ export function StationBrowser() {
         if (debouncedQuery) params.set("search", debouncedQuery);
         if (country) params.set("country", country);
         if (tag) params.set("tag", tag);
+        if (language) params.set("language", language);
+        if (sort === "name") {
+          params.set("order", "name");
+          params.set("reverse", "false");
+        } else if (sort === "recent") {
+          params.set("order", "clicktrend");
+          params.set("reverse", "true");
+        } else if (sort === "votes") {
+          params.set("order", "votes");
+          params.set("reverse", "true");
+        } else {
+          params.set("order", "clickcount");
+          params.set("reverse", "true");
+        }
         params.set("limit", String(PAGE_SIZE));
         params.set("offset", String((page - 1) * PAGE_SIZE));
         const res = await fetch(`/api/stations?${params.toString()}`, {
@@ -149,9 +179,9 @@ export function StationBrowser() {
     }
     void loadStations();
     return () => controller.abort();
-  }, [debouncedQuery, country, tag, reloadKey, page]);
+  }, [debouncedQuery, country, tag, language, sort, reloadKey, page]);
 
-  const activeFilterCount = [country, tag, debouncedQuery].filter(Boolean).length;
+  const activeFilterCount = [country, tag, language, debouncedQuery, sort !== "popular" ? sort : ""].filter(Boolean).length;
   const heading = useMemo(() => {
     if (debouncedQuery) return `Results for “${debouncedQuery}”`;
     if (country || tag) return "Filtered stations";
@@ -162,6 +192,26 @@ export function StationBrowser() {
     [filters.countries],
   );
   const quickTags = useMemo(() => filters.tags.slice(0, 6).map((t) => t.name), [filters.tags]);
+  const searchSuggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const pool = [
+      ...filters.countries.map((c) => c.name),
+      ...filters.tags.map((t) => t.name),
+      ...filters.languages.map((l) => l.name),
+      ...stations.map((s) => s.name),
+    ];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const item of pool) {
+      const key = item.toLowerCase();
+      if (!key.includes(q) || seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+      if (out.length >= 8) break;
+    }
+    return out;
+  }, [query, filters.countries, filters.tags, filters.languages, stations]);
 
   return (
     <div className="space-y-10">
@@ -216,10 +266,27 @@ export function StationBrowser() {
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Escape" && query) { e.preventDefault(); setQuery(""); } }}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    onKeyDown={(e) => { if (e.key === "Escape" && query) { e.preventDefault(); setQuery(""); setSearchFocused(false); } }}
                     placeholder="Search stations, cities, genres..."
                     className="w-full rounded-xl border border-border bg-background/65 py-3.5 pl-11 pr-24 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] placeholder:text-muted-foreground transition focus:border-primary focus:bg-background/85 focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
+                  {searchFocused && searchSuggestions.length > 0 && query.trim().length >= 2 && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-border bg-surface-elevated/95 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+                      {searchSuggestions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setQuery(s); setDebouncedQuery(s); setPage(1); setSearchFocused(false); }}
+                          className="block w-full px-4 py-2.5 text-left text-sm text-foreground-muted hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:bg-foreground/[0.05]"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                     {loading && (query || country || tag) ? (
                       <LoaderCircle size={16} className="animate-spin text-primary" aria-label="Loading" />
@@ -256,7 +323,7 @@ export function StationBrowser() {
               </form>
 
               {/* Desktop filters */}
-              <div className="hidden gap-3 lg:grid lg:grid-cols-[220px_220px_auto]">
+              <div className="hidden gap-3 lg:grid lg:grid-cols-[200px_200px_180px_170px_auto]">
                 <label className="relative block">
                   <span className="sr-only">Filter by country</span>
                   <Globe2 size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -273,7 +340,24 @@ export function StationBrowser() {
                     {filters.tags.map((t) => (<option key={t.name} value={t.name}>{t.name}</option>))}
                   </select>
                 </label>
-                <button type="button" onClick={() => { setQuery(""); setCountry(""); setTag(""); setPage(1); }} className="self-center justify-self-start rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs font-medium text-foreground-muted transition hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <label className="relative block">
+                  <span className="sr-only">Filter by language</span>
+                  <Radio size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <select value={language} onChange={(e) => { setLanguage(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                    <option value="">All languages</option>
+                    {filters.languages.map((l) => (<option key={l.name} value={l.name}>{l.name}</option>))}
+                  </select>
+                </label>
+                <label className="relative block">
+                  <span className="sr-only">Sort stations</span>
+                  <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                    <option value="popular">Most popular</option>
+                    <option value="votes">Most voted</option>
+                    <option value="name">Name A-Z</option>
+                    <option value="recent">Trending</option>
+                  </select>
+                </label>
+                <button type="button" onClick={() => { setQuery(""); setCountry(""); setTag(""); setLanguage(""); setSort("popular"); setPage(1); }} className="self-center justify-self-start rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs font-medium text-foreground-muted transition hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   Clear{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
                 </button>
               </div>
@@ -316,9 +400,28 @@ export function StationBrowser() {
                           </select>
                         </div>
                       </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-foreground">Language</span>
+                        <div className="relative">
+                          <Radio size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                          <select value={language} onChange={(e) => { setLanguage(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3.5 pl-11 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                            <option value="">All languages</option>
+                            {filters.languages.map((l) => (<option key={l.name} value={l.name}>{l.name}</option>))}
+                          </select>
+                        </div>
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-foreground">Sort by</span>
+                        <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="w-full appearance-none rounded-xl border border-border bg-background/55 py-3.5 px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30">
+                          <option value="popular">Most popular</option>
+                          <option value="votes">Most voted</option>
+                          <option value="name">Name A-Z</option>
+                          <option value="recent">Trending</option>
+                        </select>
+                      </label>
                     </div>
                     <div className="flex gap-3 border-t border-border/60 px-5 pt-4">
-                      <button type="button" onClick={() => { setCountry(""); setTag(""); setPage(1); }} className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm font-medium text-foreground hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Clear all</button>
+                      <button type="button" onClick={() => { setCountry(""); setTag(""); setLanguage(""); setSort("popular"); setPage(1); }} className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl border border-border bg-foreground/[0.03] px-4 py-3 text-sm font-medium text-foreground hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Clear all</button>
                       <button type="button" onClick={() => setFiltersOpen(false)} className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Apply filters</button>
                     </div>
                   </div>

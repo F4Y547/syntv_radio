@@ -87,13 +87,14 @@ export async function searchStations(
   params: StationSearchParams = {},
 ): Promise<Station[]> {
   const search = params.search?.trim();
-  const hasFilters = Boolean(search || params.country || params.tag);
+  const hasFilters = Boolean(search || params.country || params.tag || params.language);
   const endpoint = hasFilters ? "/stations/search" : "/stations/topclick";
   const query = new URLSearchParams();
 
   if (search) query.set("name", search);
   if (params.country) query.set("countrycode", params.country);
   if (params.tag) query.set("tag", params.tag);
+  if (params.language) query.set("language", params.language);
   query.set("limit", String(params.limit ?? 24));
   query.set("offset", String(params.offset ?? 0));
   query.set("order", params.order ?? (search ? "votes" : "clickcount"));
@@ -119,6 +120,14 @@ export async function getTags(): Promise<{ name: string; stationCount: number }[
   return data
     .filter((t) => t.name && t.stationcount > 10)
     .map((t) => ({ name: t.name, stationCount: t.stationcount }));
+}
+
+export async function getLanguages(): Promise<{ name: string; stationCount: number }[]> {
+  const data = await fetchJson<Array<{ name: string; stationcount: number }>>("/languages?limit=80&order=stationcount&reverse=true&hidebroken=true", 3600);
+  if (!data) return [];
+  return data
+    .filter((l) => l.name && l.stationcount > 10)
+    .map((l) => ({ name: l.name, stationCount: l.stationcount }));
 }
 
 export async function getStationById(id: string): Promise<Station | null> {

@@ -22,6 +22,7 @@ export interface StationSearchParams {
   search?: string;
   country?: string;
   tag?: string;
+  language?: string;
   limit?: number;
   offset?: number;
   order?: "clickcount" | "votes" | "name" | "clicktrend";
