@@ -165,6 +165,13 @@ For Vercel (project `syntv-radio`):
 
 Do not set production contact credentials or ad activation flags in Preview unless you intend to send real messages or serve ads there.
 
+## Production environment readiness (current)
+
+- `DATABASE_URL`, `DATABASE_URL_UNPOOLED` — configured in Vercel (names confirmed; values not recorded).
+- `REDIS_URL` — **not configured** in accessible runtime; required for production multi-instance shared state (listeners/rate limits/contact dedupe/public cache).
+- `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` — configured in Vercel; keep `CONTACT_EMAIL_VERIFIED=false` until deployed inbox receipt and end-to-end delivery are confirmed.
+- `ADS_ENABLED=false`, `ADS_CMP_VERIFIED=false` — keep disabled until all AdSense/CMP/slot requirements are satisfied.
+
 ## Verification commands
 
 ```bash

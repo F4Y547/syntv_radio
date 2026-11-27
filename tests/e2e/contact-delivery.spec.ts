@@ -235,6 +235,28 @@ test.describe("contact API delivery", () => {
     expect(calls).toHaveLength(1);
   });
 
+  test("failed delivery releases the claim so the same message can be retried", async () => {
+    let attempts = 0;
+    const fetchImpl: typeof fetch = async () => {
+      attempts += 1;
+      return new Response(null, { status: attempts === 1 ? 500 : 204 });
+    };
+    const handler = createContactHandler({
+      config: getContactDeliveryConfig({ CONTACT_WEBHOOK_URL: "https://hooks.example.com/contact" }),
+      fetchImpl,
+      now: fixedNow,
+      rateLimiter: allowAll,
+      dedupe: createTestDedupeStore(),
+    });
+
+    const failed = await handler(makeRequest());
+    const retried = await handler(makeRequest());
+
+    expect(failed.status).toBe(502);
+    expect(retried.status).toBe(200);
+    expect(attempts).toBe(2);
+  });
+
   test("honeypot submissions are rejected", async () => {
     const { fetchImpl, calls } = successFetch();
     const handler = createContactHandler({

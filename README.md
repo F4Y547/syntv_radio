@@ -117,11 +117,13 @@ Create a local `.env.local` from [`.env.example`](./.env.example). Never commit 
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `REDIS_URL` | Production multi-instance | Shared Redis-compatible store for real-time listener sessions/counts |
+| `REDIS_URL` | Production multi-instance | Shared Redis-compatible store for listener presence, distributed rate limiting, contact dedupe, and public directory cache |
 | `LISTENER_SESSION_TTL` | Optional | Active session TTL in seconds (default `90`) |
 | `LISTENER_HEARTBEAT_INTERVAL` | Optional | Client heartbeat interval in seconds (default `25`) |
 | `LISTENER_UPDATE_INTERVAL` | Optional | Live SSE/poll update interval in seconds (default `5`) |
-| `DATABASE_URL` | Admin features | PostgreSQL connection string for Prisma-backed admin/DB features |
+| `PUBLIC_CACHE_TTL_SECONDS` | Optional | Public station/country/genre directory cache TTL in seconds (default `300`, clamped 30-3600) |
+| `DATABASE_URL` | Admin features | PostgreSQL pooled connection string for Prisma runtime |
+| `DATABASE_URL_UNPOOLED` | Admin/migrations | Direct PostgreSQL connection string for Prisma migrations (`directUrl`) |
 | `LISTENER_ADMIN_TOKEN` | For admin analytics | Protects `/admin/listeners` and `/api/listeners/admin` |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Optional | Google Search Console verification |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Optional | Bing Webmaster Tools verification |
@@ -145,7 +147,7 @@ Create a local `.env.local` from [`.env.example`](./.env.example). Never commit 
 SYNTV RADIO tracks **active playback sessions on SYNTV RADIO** (not global external station audience). Counts update in real time via SSE with polling fallback.
 
 - **Session lifecycle**: listener becomes active only after audio playback starts; heartbeat keeps session alive; pause/stop/error/pagehide removes or expires it.
-- **Storage**: Redis-compatible shared store when `REDIS_URL` is configured; documented in-memory fallback for development/single-instance only.
+- **Storage**: Redis-compatible shared store when `REDIS_URL` is configured; documented in-memory fallback for development/single-instance only. Redis is also used for distributed rate limiting, contact duplicate protection, and public directory caching with configurable TTL.
 - **Privacy**: anonymous random session IDs, no unnecessary personal data, rate-limited endpoints.
 - **Admin analytics**: protected by `LISTENER_ADMIN_TOKEN` at `/admin/listeners`.
 
@@ -195,14 +197,50 @@ Playwright E2E coverage includes smoke flows, SEO checks, and AdSense-readiness 
 
 ## Deployment
 
-The app is configured for Vercel deployment.
+The app is configured for Vercel deployment. No deployment is performed by this repo's automation without explicit authorization.
 
-1. Push to the main branch/repository.
-2. Import or connect the repository in Vercel.
-3. Configure the production domain (`syntv.online`).
-4. Add optional verification environment variables, plus contact delivery variables if messages should be delivered.
-5. Deploy and verify `/robots.txt`, `/sitemap.xml`, `/ads.txt`, metadata, and core user flows.
-6. Follow [`docs/adsense-readiness.md`](./docs/adsense-readiness.md) before enabling ads or requesting review.
+### Required production environment variables
+
+Set in Vercel Project Settings > Environment Variables (Production/Preview/Development as appropriate). Do not commit secrets.
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Pooled Neon/Postgres connection for Prisma runtime |
+| `DATABASE_URL_UNPOOLED` | Direct Neon/Postgres connection for Prisma migrations (`directUrl`) |
+| `REDIS_URL` | Redis-compatible shared state (Upstash/Vercel KV compatible) for listeners, rate limits, contact dedupe, public cache |
+| `RESEND_API_KEY` | Resend API key (secret) |
+| `CONTACT_FROM_EMAIL` | Verified sender, e.g. `SYNTV RADIO <hello@syntv.online>` |
+| `CONTACT_TO_EMAIL` | Recipient mailbox, e.g. `hello@syntv.online` |
+| `CONTACT_EMAIL_VERIFIED` | Server-only gate; keep `false` until deployed real delivery is confirmed |
+| `ADS_ENABLED` | Keep `false` until AdSense/CMP/slots are ready |
+| `ADS_CMP_VERIFIED` | Keep `false` until Google-certified CMP is verified |
+
+Also configure `LISTENER_ADMIN_TOKEN`, verification vars, and `NEXT_PUBLIC_ADSENSE_SLOT_*` as needed. See `.env.example`.
+
+### Admin bootstrap (first owner)
+
+After database migrations are applied and env vars are set in the target environment:
+
+```powershell
+$env:DATABASE_URL="..."; $env:ADMIN_BOOTSTRAP_EMAIL="owner@example.com"; $env:ADMIN_BOOTSTRAP_PASSWORD="long-random-password"; npm run db:bootstrap-owner
+```
+
+- Requires `DATABASE_URL`, valid `ADMIN_BOOTSTRAP_EMAIL`, and `ADMIN_BOOTSTRAP_PASSWORD` (min 12 chars).
+- Uses secure scrypt password hashing. No default credentials. Passwords are not logged.
+- Fails safely if DB is unavailable or an active owner already exists (unless `ADMIN_BOOTSTRAP_FORCE=true` is explicitly set).
+- Do not invent credentials or run bootstrap against production without authorized secure env vars.
+
+### Manual deployment steps
+
+1. Confirm all required env vars are set in Vercel (no secrets in git).
+2. Apply Prisma migrations against production DB: `npx prisma@6.19.2 migrate deploy`.
+3. Bootstrap first owner (secure env vars only).
+4. Redeploy authorized commit in Vercel.
+5. Verify `/admin` loads, login/CSRF/RBAC/session flows work, and audit logs persist.
+6. Verify Redis-backed shared state (listeners/rate limits/contact dedupe) in multi-instance deployment.
+7. Verify contact delivery on deployed environment before setting `CONTACT_EMAIL_VERIFIED=true`.
+8. Keep `ADS_ENABLED=false` and `ADS_CMP_VERIFIED=false` until all AdSense/CMP requirements are satisfied.
+9. Verify `/robots.txt`, `/sitemap.xml`, `/ads.txt`, metadata, and core user flows.
 
 ## Data & Attribution
 
