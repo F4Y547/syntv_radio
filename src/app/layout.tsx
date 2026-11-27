@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { AdsProvider } from "@/components/ads/ads-provider";
 import { getAdsConfig } from "@/lib/ads/config";
+import { Analytics } from "@vercel/analytics/next";
 
 const siteUrl = "https://syntv.online";
 
@@ -181,6 +182,7 @@ export default function RootLayout({
         >
           <AppShell>{children}</AppShell>
         </AdsProvider>
+        <Analytics />
       </body>
     </html>
   );
