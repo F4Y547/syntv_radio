@@ -42,7 +42,7 @@ export function StationDetailActions({ station }: { station: Station }) {
         type="button"
         onClick={handlePlay}
         className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={isPlaying ? `Pause ${station.name}` : `Play ${station.name}`}
+        aria-label={isLoading ? `Connecting ${station.name}` : isPlaying ? `Playing ${station.name}` : `Play station ${station.name}`}
       >
         {isLoading ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : isPlaying ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
         {isLoading ? "Connecting" : isPlaying ? "Playing" : "Play station"}

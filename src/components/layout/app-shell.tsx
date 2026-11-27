@@ -179,7 +179,6 @@ function ShellContent({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={openSearch}
               className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={t("openSearch")}
             >
               <Search size={16} aria-hidden="true" />
               <span className="hidden lg:inline">{t("search")}</span>

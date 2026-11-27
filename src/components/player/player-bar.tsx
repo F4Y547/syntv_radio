@@ -128,7 +128,7 @@ export function PlayerBar() {
             type="button"
             onClick={() => { if (currentStation) setExpanded(true); }}
             className="flex min-w-0 items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
-            aria-label={currentStation ? `Open ${currentStation.name} player` : "No station selected"}
+            aria-label={currentStation ? `Open ${currentStation.name} player` : undefined}
             disabled={!currentStation}
           >
             <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-primary-soft text-primary transition-all duration-500 sm:h-12 sm:w-12 ${isPlaying ? "ring-2 ring-primary/35 ring-offset-2 ring-offset-background" : ""}`}>
@@ -208,7 +208,7 @@ export function PlayerBar() {
               onClick={() => setShowViz((v) => !v)}
               className={`inline-flex h-9 rounded-full px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${showViz ? "bg-primary-soft text-primary" : "text-foreground-muted hover:bg-foreground/[0.05] hover:text-foreground"}`}
               aria-pressed={showViz}
-              aria-label="Toggle visualizer"
+              aria-label="Viz"
             >
               Viz
             </button>
