@@ -1,71 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 0 454 180" fill="none" role="img" aria-label="SYNTV RADIO logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 30 1140 395" fill="none" role="img" aria-label="SYNTV RADIO logo">
+  <title>SYNTV RADIO</title>
   <defs>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
+    <linearGradient id="mic" x1="0" y1="-90" x2="0" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#E9FCFF"/>
+      <stop offset="1" stop-color="#63DCF4"/>
+    </linearGradient>
+    <linearGradient id="stand" x1="0" y1="0" x2="0" y2="140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#9FECFB"/>
+    </linearGradient>
+    <mask id="grille" maskUnits="userSpaceOnUse" x="-40" y="-98" width="80" height="156">
+      <rect x="-32" y="-90" width="64" height="140" rx="32" fill="#FFFFFF"/>
+
+      <g stroke="#000" stroke-width="4" stroke-linecap="round">
+        <path d="M-27 -68H-9 M9 -68H27"/>
+        <path d="M-27 -46H-9 M9 -46H27"/>
+        <path d="M-27 -24H-9 M9 -24H27"/>
+        <path d="M-27 -2H-9 M9 -2H27"/>
+      </g>
+    </mask>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <style>
-      .cyan { fill: #22C5E5; }
-      .cyan-stroke { stroke: #22C5E5; }
-      .white { fill: #FFFFFF; }
-      .brand { font-family: 'Montserrat', 'Arial Black', 'Segoe UI', Arial, sans-serif; font-weight: 800; letter-spacing: 1px; }
-      .radio { font-family: 'Montserrat', 'Arial', 'Segoe UI', Arial, sans-serif; font-weight: 700; letter-spacing: 3px; }
-    </style>
   </defs>
-
-  <!-- Left icon group -->
-  <g filter="url(#glow)">
-    <!-- Circular swoosh -->
-    <path d="M95 24 A66 66 0 1 0 150 52" stroke="#22C5E5" stroke-width="7" stroke-linecap="round" fill="none"/>
-    <!-- Broadcast arcs -->
-    <path d="M58 46 C70 34 82 28 95 28" stroke="#22C5E5" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95"/>
-    <path d="M44 34 C62 18 80 10 95 10" stroke="#22C5E5" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <g transform="translate(200 240)" filter="url(#glow)">
+    <path d="M129.8 -52.4 A140 140 0 1 1 36.2 -135.2" stroke="#22C5E5" stroke-width="13" stroke-linecap="round"/>
+    <path d="M-58.8 -161.6 A172 172 0 0 1 145.8 -91.1" stroke="#22C5E5" stroke-width="12" stroke-linecap="round"/>
+    <path d="M-74.9 -185.4 A200 200 0 0 1 157.6 -123.1" stroke="#22C5E5" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+    <g>
+      <rect x="-32" y="-90" width="64" height="140" rx="32" fill="url(#mic)" mask="url(#grille)"/>
+      <path d="M-54 12 V58 C-54 84 -30 104 0 104 C30 104 54 84 54 58 V12" stroke="url(#stand)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M0 104V126 M-32 126H32" stroke="url(#stand)" stroke-width="12" stroke-linecap="round"/>
+    </g>
   </g>
-
-  <!-- Microphone -->
+  <g transform="translate(390 270) scale(0.21 -0.21)">
+    <path fill="#FFFFFF" d="M316.0 -14.0Q230.0 -14.0 150.0 7.0Q70.0 28.0 21.0 63.0L86.0 209.0Q133.0 178.0 195.0 159.0Q257.0 140.0 317.0 140.0Q378.0 140.0 404.5 156.0Q431.0 172.0 431.0 197.0Q431.0 221.0 409.5 235.0Q388.0 249.0 352.5 258.0Q317.0 267.0 274.5 276.0Q232.0 285.0 189.5 298.5Q147.0 312.0 111.5 335.0Q76.0 358.0 54.5 395.0Q33.0 432.0 33.0 487.0Q33.0 549.0 67.5 600.5Q102.0 652.0 170.5 683.0Q239.0 714.0 343.0 714.0Q411.0 714.0 478.0 698.5Q545.0 683.0 597.0 653.0L536.0 506.0Q486.0 533.0 437.0 546.5Q388.0 560.0 342.0 560.0Q280.0 560.0 254.5 541.5Q229.0 523.0 229.0 497.0Q229.0 474.0 250.5 461.0Q272.0 448.0 307.5 439.0Q343.0 430.0 385.5 421.0Q428.0 412.0 470.0 398.5Q512.0 385.0 547.5 362.5Q583.0 340.0 604.5 303.5Q626.0 267.0 626.0 212.0Q626.0 151.0 592.0 99.5Q558.0 48.0 489.0 17.0Q420.0 -14.0 316.0 -14.0Z M894.0 0.0V253.0L627.0 700.0H836.0L1001.0 422.0L1168.0 700.0H1360.0L1092.0 251.0V0.0Z M1410.0 0.0V700.0H1573.0L1882.0 327.0V700.0H2076.0V0.0H1913.0L1604.0 373.0V0.0Z"/>
+    <path transform="translate(2146 0)" fill="#22C5E5" d="M219.0 0.0V543.0H4.0V700.0H631.0V543.0H417.0V0.0Z M920.0 0.0 621.0 700.0H835.0L1025.0 244.0L1219.0 700.0H1415.0L1115.0 0.0Z"/>
+  </g>
   <g>
-    <rect x="80" y="52" width="30" height="52" rx="15" fill="#22C5E5"/>
-    <path d="M66 96 C66 114 79 127 95 127 C111 127 124 114 124 96" stroke="#22C5E5" stroke-width="6" stroke-linecap="round" fill="none"/>
-    <line x1="95" y1="127" x2="95" y2="143" stroke="#22C5E5" stroke-width="6" stroke-linecap="round"/>
-    <line x1="79" y1="143" x2="111" y2="143" stroke="#22C5E5" stroke-width="6" stroke-linecap="round"/>
+    <rect x="480" y="308" width="502" height="88" rx="44" stroke="#22C5E5" stroke-width="3.5"/>
+    <path d="M507 330.5 547 352 507 373.5Z" fill="#22C5E5" stroke="#22C5E5" stroke-width="7" stroke-linejoin="round"/>
+    <g transform="translate(574 379) scale(0.076 -0.076)">
+      <path fill="#FFFFFF" d="M83.0 0.0V700.0H382.0Q528.0 700.0 609.0 632.0Q690.0 564.0 690.0 446.0Q690.0 368.0 652.5 311.5Q615.0 255.0 547.0 225.0L703.0 0.0H529.0L394.0 195.0Q390.0 195.0 386.0 195.0H245.0V0.0ZM245.0 324.0H377.0Q451.0 324.0 488.5 356.5Q526.0 389.0 526.0 446.0Q526.0 504.0 488.5 536.0Q451.0 568.0 377.0 568.0H245.0Z M1046.0 0.0 1358.0 700.0H1518.0L1831.0 0.0H1661.0L1599.0 150.0H1274.0L1212.0 0.0ZM1325.0 273.0H1548.0L1437.0 540.0Z M2224.0 0.0V700.0H2542.0Q2656.0 700.0 2743.0 656.5Q2830.0 613.0 2879.0 534.5Q2928.0 456.0 2928.0 350.0Q2928.0 244.0 2879.0 165.5Q2830.0 87.0 2743.0 43.5Q2656.0 0.0 2542.0 0.0ZM2386.0 133.0H2534.0Q2604.0 133.0 2655.5 159.5Q2707.0 186.0 2735.5 234.5Q2764.0 283.0 2764.0 350.0Q2764.0 417.0 2735.5 465.5Q2707.0 514.0 2655.5 540.5Q2604.0 567.0 2534.0 567.0H2386.0Z M3370.0 0.0V700.0H3532.0V0.0Z M4357.0 -12.0Q4274.0 -12.0 4204.5 15.0Q4135.0 42.0 4083.0 91.0Q4031.0 140.0 4002.5 206.0Q3974.0 272.0 3974.0 350.0Q3974.0 428.0 4002.5 494.0Q4031.0 560.0 4083.0 609.0Q4135.0 658.0 4204.5 685.0Q4274.0 712.0 4357.0 712.0Q4440.0 712.0 4509.5 685.0Q4579.0 658.0 4631.0 609.5Q4683.0 561.0 4711.5 494.5Q4740.0 428.0 4740.0 350.0Q4740.0 272.0 4711.5 205.5Q4683.0 139.0 4631.0 90.5Q4579.0 42.0 4509.5 15.0Q4440.0 -12.0 4357.0 -12.0ZM4357.0 126.0Q4419.0 126.0 4468.5 154.5Q4518.0 183.0 4547.0 233.5Q4576.0 284.0 4576.0 350.0Q4576.0 416.0 4547.0 466.5Q4518.0 517.0 4468.5 545.5Q4419.0 574.0 4357.0 574.0Q4295.0 574.0 4245.5 545.5Q4196.0 517.0 4167.0 466.5Q4138.0 416.0 4138.0 350.0Q4138.0 284.0 4167.0 233.5Q4196.0 183.0 4245.5 154.5Q4295.0 126.0 4357.0 126.0Z"/>
+    </g>
   </g>
-
-  <!-- Brand name -->
-  <text x="190" y="92" class="brand" font-size="74" letter-spacing="1">
-    <tspan fill="#FFFFFF">SYN</tspan><tspan fill="#22C5E5">TV</tspan>
-  </text>
-
-  <!-- Radio badge row -->
-  <g transform="translate(190,112)">
-    <!-- Left waveform -->
-    <g fill="#22C5E5">
-      <rect x="0" y="18" width="4" height="10" rx="2" opacity="0.7"/>
-      <rect x="8" y="14" width="4" height="18" rx="2" opacity="0.85"/>
-      <rect x="16" y="10" width="4" height="26" rx="2"/>
-      <rect x="24" y="14" width="4" height="18" rx="2" opacity="0.85"/>
-      <rect x="32" y="18" width="4" height="10" rx="2" opacity="0.7"/>
-    </g>
-
-    <!-- Rounded outline badge -->
-    <g transform="translate(48,0)">
-      <rect x="0" y="2" width="160" height="42" rx="21" stroke="#22C5E5" stroke-width="3" fill="none"/>
-      <!-- Play button -->
-      <circle cx="28" cy="23" r="11" fill="#22C5E5"/>
-      <polygon points="25,17 25,29 35,23" fill="#080D13"/>
-      <!-- RADIO text -->
-      <text x="48" y="31" fill="#FFFFFF" font-family="'Montserrat','Arial','Segoe UI',Arial,sans-serif" font-weight="700" font-size="27" letter-spacing="3">RADIO</text>
-    </g>
-
-    <!-- Right waveform -->
-    <g transform="translate(220,0)" fill="#22C5E5">
-      <rect x="0" y="18" width="4" height="10" rx="2" opacity="0.7"/>
-      <rect x="8" y="14" width="4" height="18" rx="2" opacity="0.85"/>
-      <rect x="16" y="10" width="4" height="26" rx="2"/>
-      <rect x="24" y="14" width="4" height="18" rx="2" opacity="0.85"/>
-      <rect x="32" y="18" width="4" height="10" rx="2" opacity="0.7"/>
-    </g>
+  <g fill="#22C5E5">
+      <rect x="348" y="346.0" width="5" height="12" rx="2.5" opacity="0.55"/>
+      <rect x="361" y="342.0" width="5" height="20" rx="2.5" opacity="0.7"/>
+      <rect x="374" y="337.0" width="5" height="30" rx="2.5" opacity="0.85"/>
+      <rect x="387" y="330.0" width="5" height="44" rx="2.5" opacity="1"/>
+      <rect x="400" y="323.0" width="5" height="58" rx="2.5" opacity="1"/>
+      <rect x="413" y="330.0" width="5" height="44" rx="2.5" opacity="0.95"/>
+      <rect x="426" y="337.0" width="5" height="30" rx="2.5" opacity="0.8"/>
+      <rect x="439" y="342.0" width="5" height="20" rx="2.5" opacity="0.65"/>
+      <rect x="452" y="346.0" width="5" height="12" rx="2.5" opacity="0.5"/>
+  </g>
+  <g fill="#22C5E5">
+      <rect x="1010" y="346.0" width="5" height="12" rx="2.5" opacity="0.55"/>
+      <rect x="1023" y="342.0" width="5" height="20" rx="2.5" opacity="0.7"/>
+      <rect x="1036" y="337.0" width="5" height="30" rx="2.5" opacity="0.85"/>
+      <rect x="1049" y="330.0" width="5" height="44" rx="2.5" opacity="1"/>
+      <rect x="1062" y="323.0" width="5" height="58" rx="2.5" opacity="1"/>
+      <rect x="1075" y="330.0" width="5" height="44" rx="2.5" opacity="0.95"/>
+      <rect x="1088" y="337.0" width="5" height="30" rx="2.5" opacity="0.8"/>
+      <rect x="1101" y="342.0" width="5" height="20" rx="2.5" opacity="0.65"/>
+      <rect x="1114" y="346.0" width="5" height="12" rx="2.5" opacity="0.5"/>
   </g>
 </svg>

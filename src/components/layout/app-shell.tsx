@@ -14,6 +14,9 @@ import { PwaRegister } from "./pwa-register";
 import { InstallPrompt } from "./install-prompt";
 import { LocaleProvider, useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "./language-toggle";
+import { ConsentProvider, useConsent } from "@/lib/consent";
+import { ConsentManager } from "@/components/consent/consent-manager";
+import { AdSenseScript } from "@/components/ads/adsense-script";
 
 const navItems = [
   { href: "/", icon: Compass, key: "discover" },
@@ -25,9 +28,16 @@ const navItems = [
 
 function ShellContent({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
+  const { openPreferences } = useConsent();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuPathname, setMenuPathname] = useState(pathname);
+  const [copyrightYear, setCopyrightYear] = useState("");
+
+  useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- set the client-side copyright year after hydration */
+    setCopyrightYear(String(new Date().getFullYear()));
+  }, []);
 
   if (menuPathname !== pathname) {
     setMenuPathname(pathname);
@@ -142,6 +152,30 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                     <span>{t(key)}</span>
                   </Link>
                 ))}
+                <div className="mt-2 flex flex-col gap-1 border-t border-border/60 px-3 pt-3">
+                  <p className="px-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Information</p>
+                  <Link
+                    href="/about"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/faq"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    FAQ
+                  </Link>
+                  <Link
+                    href="/contact"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-foreground-muted transition hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Contact
+                  </Link>
+                </div>
                 <div className="mt-2 flex items-center justify-between border-t border-border/60 px-3 pt-3">
                   <span className="text-sm text-muted-foreground">{t("language")}</span>
                   <LanguageToggle />
@@ -152,40 +186,67 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         </header>
         <main className="container-page py-8 sm:py-10">{children}</main>
         <footer className="border-t border-border/60 py-10 text-sm text-muted-foreground">
-          <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
               <p className="font-display text-base font-semibold text-foreground">SYNTV RADIO</p>
-              <p className="mt-2 max-w-xs">Listen to live online radio stations worldwide. Discover stations by country, genre, and name.</p>
+              <p className="mt-2 max-w-xs leading-relaxed">
+                An independent directory and web player for live online radio. Discover stations by country, genre,
+                language, and name. We do not operate the stations or host their streams.
+              </p>
+              <p className="mt-3 text-xs">
+                <Link href="/about" className="text-primary hover:underline">About the project</Link>
+              </p>
             </div>
             <div>
               <p className="font-semibold text-foreground">Explore</p>
               <ul className="mt-2 space-y-1.5">
                 <li><Link href="/stations" className="hover:text-foreground">Station directory</Link></li>
+                <li><Link href="/countries" className="hover:text-foreground">Countries</Link></li>
+                <li><Link href="/genres" className="hover:text-foreground">Genres</Link></li>
+                <li><Link href="/trending" className="hover:text-foreground">Trending</Link></li>
                 <li><Link href="/explore" className="hover:text-foreground">World globe</Link></li>
+                <li><Link href="/collections" className="hover:text-foreground">Collections</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Information</p>
+              <ul className="mt-2 space-y-1.5">
+                <li><Link href="/about" className="hover:text-foreground">About</Link></li>
+                <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
+                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+                <li><Link href="/stats" className="hover:text-foreground">Your listening stats</Link></li>
                 <li><Link href="/#favorites" className="hover:text-foreground">Favorites</Link></li>
               </ul>
             </div>
             <div>
-              <p className="font-semibold text-foreground">Popular countries</p>
+              <p className="font-semibold text-foreground">Legal</p>
               <ul className="mt-2 space-y-1.5">
-                <li><Link href="/country/united-states" className="hover:text-foreground">United States</Link></li>
-                <li><Link href="/country/united-kingdom" className="hover:text-foreground">United Kingdom</Link></li>
-                <li><Link href="/country/bangladesh" className="hover:text-foreground">Bangladesh</Link></li>
-                <li><Link href="/country/india" className="hover:text-foreground">India</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Popular genres</p>
-              <ul className="mt-2 space-y-1.5">
-                <li><Link href="/genre/pop" className="hover:text-foreground">Pop</Link></li>
-                <li><Link href="/genre/rock" className="hover:text-foreground">Rock</Link></li>
-                <li><Link href="/genre/news" className="hover:text-foreground">News</Link></li>
-                <li><Link href="/genre/classical" className="hover:text-foreground">Classical</Link></li>
+                <li><Link href="/privacy-policy" className="hover:text-foreground">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground">Terms &amp; Conditions</Link></li>
+                <li><Link href="/disclaimer" className="hover:text-foreground">Disclaimer</Link></li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={openPreferences}
+                    className="text-left hover:text-foreground focus-visible:outline-none focus-visible:underline"
+                  >
+                    Cookie preferences
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
+          <div className="container-page mt-8 flex flex-col gap-2 border-t border-border/50 pt-5 text-xs sm:flex-row sm:items-center sm:justify-between">
+            <p>© {copyrightYear ? `${copyrightYear} ` : ""}SYNTV RADIO. All original site content is provided for radio discovery.</p>
+            <p>
+              Station names, logos, and streams belong to their respective owners.{" "}
+              <Link href="/disclaimer" className="text-primary hover:underline">Read the disclaimer</Link>.
+            </p>
+          </div>
         </footer>
         <PlayerBar />
+        <AdSenseScript />
+        <ConsentManager />
         <CommandPalette />
         <KeyboardShortcuts />
         <PwaRegister />
@@ -197,11 +258,13 @@ function ShellContent({ children }: { children: React.ReactNode }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <LocaleProvider>
-      <PlayerProvider>
-        <ListenerCountsProvider>
-          <ShellContent>{children}</ShellContent>
-        </ListenerCountsProvider>
-      </PlayerProvider>
+      <ConsentProvider>
+        <PlayerProvider>
+          <ListenerCountsProvider>
+            <ShellContent>{children}</ShellContent>
+          </ListenerCountsProvider>
+        </PlayerProvider>
+      </ConsentProvider>
     </LocaleProvider>
   );
 }

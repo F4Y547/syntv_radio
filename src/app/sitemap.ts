@@ -3,12 +3,25 @@ import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/s
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { siteUrl } from "@/lib/seo/site";
 
+const lastModified = new Date("2026-11-27T00:00:00.000Z");
+
+const staticPages: MetadataRoute.Sitemap = [
+  { url: siteUrl, lastModified, changeFrequency: "daily", priority: 1 },
+  { url: `${siteUrl}/stations`, lastModified, changeFrequency: "daily", priority: 0.9 },
+  { url: `${siteUrl}/explore`, lastModified, changeFrequency: "weekly", priority: 0.8 },
+  { url: `${siteUrl}/countries`, lastModified, changeFrequency: "weekly", priority: 0.8 },
+  { url: `${siteUrl}/genres`, lastModified, changeFrequency: "weekly", priority: 0.8 },
+  { url: `${siteUrl}/trending`, lastModified, changeFrequency: "daily", priority: 0.8 },
+  { url: `${siteUrl}/about`, lastModified, changeFrequency: "monthly", priority: 0.6 },
+  { url: `${siteUrl}/faq`, lastModified, changeFrequency: "monthly", priority: 0.6 },
+  { url: `${siteUrl}/contact`, lastModified, changeFrequency: "monthly", priority: 0.6 },
+  { url: `${siteUrl}/privacy-policy`, lastModified, changeFrequency: "yearly", priority: 0.4 },
+  { url: `${siteUrl}/terms`, lastModified, changeFrequency: "yearly", priority: 0.4 },
+  { url: `${siteUrl}/disclaimer`, lastModified, changeFrequency: "yearly", priority: 0.4 },
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const entries: MetadataRoute.Sitemap = [
-    { url: siteUrl },
-    { url: `${siteUrl}/stations` },
-    { url: `${siteUrl}/explore` },
-  ];
+  const entries: MetadataRoute.Sitemap = [...staticPages];
 
   try {
     const [countries, tags, stations] = await Promise.all([
@@ -18,13 +31,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     for (const c of countries.slice(0, 120)) {
-      entries.push({ url: `${siteUrl}/country/${countrySlug(c.name, c.code)}` });
+      entries.push({
+        url: `${siteUrl}/country/${countrySlug(c.name, c.code)}`,
+        lastModified,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
     }
     for (const t of tags.slice(0, 60)) {
-      entries.push({ url: `${siteUrl}/genre/${genreSlug(t.name)}` });
+      entries.push({
+        url: `${siteUrl}/genre/${genreSlug(t.name)}`,
+        lastModified,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
     }
     for (const s of stations) {
-      entries.push({ url: `${siteUrl}/station/${s.id}` });
+      entries.push({
+        url: `${siteUrl}/station/${s.id}`,
+        lastModified,
+        changeFrequency: "weekly",
+        priority: 0.6,
+      });
     }
   } catch (error) {
     console.error("Sitemap generation error", error);
