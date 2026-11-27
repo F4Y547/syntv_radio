@@ -39,6 +39,9 @@ export const metadata: Metadata = {
   description:
     "Discover and listen to live online radio stations from around the world. Explore radio stations by country, music genre, and category on SYNTV RADIO.",
   applicationName: "SYNTV RADIO",
+  other: {
+    "google-adsense-account": "ca-pub-6652257842391620",
+  },
   keywords: [
     "SYNTV RADIO",
     "online radio",
