@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getListenerStore, listenerConfig, getClientIp, checkRateLimitAsync, rateLimitHeaders } from "@/lib/listeners";
-import { listAuditLog, listContactSubmissions, listStationOverrides } from "@/lib/admin/store";
+import { getAdminData } from "@/lib/admin/store";
 import { getContactDeliveryConfig } from "@/lib/contact/config";
 import { getPublicAdSenseConfig } from "@/lib/ads/config";
+import { hasDatabase } from "@/lib/db";
 
 function isAuthorized(request: Request) {
   const token = listenerConfig.adminToken;
@@ -42,17 +43,17 @@ export async function GET(request: Request) {
   try {
     const store = getListenerStore();
     const now = Date.now();
-    const [analytics, contactSubmissions, auditLog, stationOverrides] = await Promise.all([
+    const [analytics, adminData] = await Promise.all([
       store.getAnalytics(now),
-      listContactSubmissions(50).catch(() => []),
-      listAuditLog(50).catch(() => []),
-      listStationOverrides().catch(() => []),
+      getAdminData().catch(() => ({ contactSubmissions: [], auditLog: [], stationOverrides: [] })),
     ]);
+    const { contactSubmissions, auditLog, stationOverrides } = adminData;
 
     const contact = getContactDeliveryConfig();
     const ads = getPublicAdSenseConfig();
     const system = {
       redisConfigured: Boolean(process.env.REDIS_URL?.trim()),
+      databaseConfigured: hasDatabase(),
       listenerStore: process.env.REDIS_URL?.trim() ? "redis" : "memory",
       nodeEnv: process.env.NODE_ENV ?? "unknown",
       contact: {

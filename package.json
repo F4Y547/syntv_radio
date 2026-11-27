@@ -16,9 +16,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:generate": "npx prisma@6.19.2 generate",
+    "db:migrate": "npx prisma@6.19.2 migrate deploy",
+    "db:migrate:dev": "npx prisma@6.19.2 migrate dev",
+    "db:studio": "npx prisma@6.19.2 studio"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "@vercel/analytics": "^2.0.1",
     "ioredis": "^6.1.0",
     "lucide-react": "^1.81.0",
     "next": "16.4.6",

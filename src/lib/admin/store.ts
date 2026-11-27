@@ -1,164 +1,142 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import Redis from "ioredis";
+import { getPrisma, hasDatabase } from "@/lib/db";
+import type { Prisma, SubmissionStatus } from "@prisma/client";
 
-export type AdminRole = "admin" | "operator" | "viewer";
+export type { SubmissionStatus };
 
-export interface AdminUser {
-  id: string;
-  email: string;
-  role: AdminRole;
-  active: boolean;
-}
-
-export interface ContactSubmission {
-  id: string;
-  createdAt: string;
+export async function recordContactSubmission(input: {
   name: string;
   email: string;
   topic: string;
   station: string;
   message: string;
-  status: "new" | "reviewed" | "resolved";
-  delivery: "accepted";
+  ip?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  if (!hasDatabase()) {
+    console.warn("[admin] DATABASE_URL not configured; contact submission not persisted to admin DB");
+    return;
+  }
+  const prisma = getPrisma();
+  await prisma.contactSubmission.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      topic: input.topic,
+      station: input.station || null,
+      message: input.message,
+      ip: input.ip ?? null,
+      userAgent: input.userAgent?.slice(0, 500) ?? null,
+      status: "new",
+      delivery: "accepted",
+    },
+  });
 }
 
-export interface AuditLogEntry {
-  id: string;
-  at: string;
-  actor: string;
-  action: string;
-  target?: string;
-  detail?: string;
+export async function listContactSubmissions(limit = 100) {
+  const prisma = getPrisma();
+  return prisma.contactSubmission.findMany({ orderBy: { createdAt: "desc" }, take: Math.min(limit, 500) });
 }
 
-export interface StationOverride {
+export async function updateContactSubmissionStatus(id: string, status: SubmissionStatus, notes?: string | null) {
+  const prisma = getPrisma();
+  return prisma.contactSubmission.update({
+    where: { id },
+    data: { status, notes: notes === undefined ? undefined : notes },
+  });
+}
+
+export async function listStationOverrides() {
+  if (!hasDatabase()) return [];
+  const prisma = getPrisma();
+  const rows = await prisma.station.findMany({
+    where: { OR: [{ isFeatured: true }, { isVerified: true }, { isActive: false }, { approvalStatus: { not: "approved" } }, { externalId: { not: null } }] },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+  });
+  return rows.map((s) => ({
+    stationId: s.externalId || s.id,
+    dbId: s.id,
+    featured: s.isFeatured,
+    verified: s.isVerified,
+    hidden: !s.isActive,
+    approvalStatus: s.approvalStatus,
+    updatedAt: s.updatedAt.toISOString(),
+    name: s.name,
+  }));
+}
+
+export async function upsertStationOverride(input: {
   stationId: string;
   featured?: boolean;
   verified?: boolean;
   hidden?: boolean;
   note?: string;
-  updatedAt: string;
   updatedBy: string;
-}
-
-export interface AdminData {
-  contactSubmissions: ContactSubmission[];
-  auditLog: AuditLogEntry[];
-  stationOverrides: Record<string, StationOverride>;
-}
-
-const EMPTY: AdminData = { contactSubmissions: [], auditLog: [], stationOverrides: {} };
-const REDIS_KEY = "syntv:admin:data:v1";
-const FILE_PATH = path.join(process.cwd(), ".data", "admin.json");
-
-function getRedisUrl() {
-  return process.env.REDIS_URL?.trim() || "";
-}
-
-function getRedis(url: string): Redis {
-  const g = globalThis as typeof globalThis & { __syntvAdminRedis?: Redis; __syntvAdminRedisUrl?: string };
-  if (g.__syntvAdminRedis && g.__syntvAdminRedisUrl === url) return g.__syntvAdminRedis;
-  g.__syntvAdminRedis = new Redis(url, { maxRetriesPerRequest: 2, enableReadyCheck: true, lazyConnect: false, connectTimeout: 5000 });
-  g.__syntvAdminRedis.on("error", (err) => console.error("[admin][redis]", err.message));
-  g.__syntvAdminRedisUrl = url;
-  return g.__syntvAdminRedis;
-}
-
-async function readFileStore(): Promise<AdminData> {
-  try {
-    const raw = await readFile(FILE_PATH, "utf8");
-    const parsed = JSON.parse(raw) as Partial<AdminData>;
-    return {
-      contactSubmissions: Array.isArray(parsed.contactSubmissions) ? parsed.contactSubmissions : [],
-      auditLog: Array.isArray(parsed.auditLog) ? parsed.auditLog : [],
-      stationOverrides: parsed.stationOverrides && typeof parsed.stationOverrides === "object" ? parsed.stationOverrides as Record<string, StationOverride> : {},
-    };
-  } catch {
-    return { ...EMPTY, contactSubmissions: [], auditLog: [], stationOverrides: {} };
+}) {
+  const prisma = getPrisma();
+  const externalId = input.stationId;
+  const existing = await prisma.station.findFirst({ where: { OR: [{ externalId }, { id: externalId }] } });
+  if (existing) {
+    return prisma.station.update({
+      where: { id: existing.id },
+      data: {
+        isFeatured: input.featured ?? existing.isFeatured,
+        isVerified: input.verified ?? existing.isVerified,
+        isActive: input.hidden === undefined ? existing.isActive : !input.hidden,
+        description: input.note ?? existing.description,
+      },
+    });
   }
-}
-
-async function writeFileStore(data: AdminData): Promise<void> {
-  await mkdir(path.dirname(FILE_PATH), { recursive: true });
-  await writeFile(FILE_PATH, JSON.stringify(data, null, 2), "utf8");
-}
-
-async function readStore(): Promise<AdminData> {
-  const url = getRedisUrl();
-  if (url) {
-    try {
-      const raw = await getRedis(url).get(REDIS_KEY);
-      if (!raw) return { ...EMPTY, contactSubmissions: [], auditLog: [], stationOverrides: {} };
-      const parsed = JSON.parse(raw) as Partial<AdminData>;
-      return {
-        contactSubmissions: Array.isArray(parsed.contactSubmissions) ? parsed.contactSubmissions : [],
-        auditLog: Array.isArray(parsed.auditLog) ? parsed.auditLog : [],
-        stationOverrides: parsed.stationOverrides && typeof parsed.stationOverrides === "object" ? parsed.stationOverrides as Record<string, StationOverride> : {},
-      };
-    } catch (err) {
-      console.error("[admin] redis read failed", err);
-      return readFileStore();
-    }
-  }
-  return readFileStore();
-}
-
-async function writeStore(data: AdminData): Promise<void> {
-  const url = getRedisUrl();
-  if (url) {
-    try {
-      await getRedis(url).set(REDIS_KEY, JSON.stringify(data));
-      return;
-    } catch (err) {
-      console.error("[admin] redis write failed", err);
-    }
-  }
-  await writeFileStore(data);
-}
-
-export async function recordContactSubmission(input: Omit<ContactSubmission, "id" | "createdAt" | "status" | "delivery">): Promise<void> {
-  const data = await readStore();
-  data.contactSubmissions.unshift({
-    ...input,
-    id: randomUUID(),
-    createdAt: new Date().toISOString(),
-    status: "new",
-    delivery: "accepted",
+  return prisma.station.create({
+    data: {
+      externalId,
+      name: `Station ${externalId.slice(0, 8)}`,
+      streamUrl: "",
+      isFeatured: Boolean(input.featured),
+      isVerified: Boolean(input.verified),
+      isActive: !input.hidden,
+      description: input.note,
+      approvalStatus: "pending",
+    },
   });
-  data.contactSubmissions = data.contactSubmissions.slice(0, 500);
-  await writeStore(data);
 }
 
-export async function listContactSubmissions(limit = 100): Promise<ContactSubmission[]> {
-  const data = await readStore();
-  return data.contactSubmissions.slice(0, limit);
+export async function addAuditLog(entry: {
+  actorId?: string | null;
+  actorEmail?: string | null;
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  detail?: Prisma.InputJsonValue | null;
+  ip?: string | null;
+}) {
+  if (!hasDatabase()) return;
+  try {
+    const prisma = getPrisma();
+    await prisma.auditLog.create({ data: { ...entry, detail: entry.detail ?? undefined } });
+  } catch (err) {
+    console.error("[audit] failed to write audit log", err);
+  }
 }
 
-export async function addAuditLog(entry: Omit<AuditLogEntry, "id" | "at">): Promise<void> {
-  const data = await readStore();
-  data.auditLog.unshift({ ...entry, id: randomUUID(), at: new Date().toISOString() });
-  data.auditLog = data.auditLog.slice(0, 1000);
-  await writeStore(data);
+export async function listAuditLog(limit = 100) {
+  if (!hasDatabase()) return [];
+  const prisma = getPrisma();
+  return prisma.auditLog.findMany({
+    orderBy: { at: "desc" },
+    take: Math.min(limit, 500),
+    include: { actor: { select: { email: true, name: true } } },
+  });
 }
 
-export async function listAuditLog(limit = 100): Promise<AuditLogEntry[]> {
-  const data = await readStore();
-  return data.auditLog.slice(0, limit);
-}
-
-export async function upsertStationOverride(override: StationOverride): Promise<void> {
-  const data = await readStore();
-  data.stationOverrides[override.stationId] = override;
-  await writeStore(data);
-}
-
-export async function listStationOverrides(): Promise<StationOverride[]> {
-  const data = await readStore();
-  return Object.values(data.stationOverrides).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-export async function getAdminData(): Promise<AdminData> {
-  return readStore();
+export async function getAdminData() {
+  if (!hasDatabase()) {
+    return { contactSubmissions: [], auditLog: [], stationOverrides: [] };
+  }
+  const [contactSubmissions, auditLog, stationOverrides] = await Promise.all([
+    listContactSubmissions(50),
+    listAuditLog(50),
+    listStationOverrides(),
+  ]);
+  return { contactSubmissions, auditLog, stationOverrides };
 }

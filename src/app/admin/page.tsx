@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AdminListenerDashboard } from "@/components/listeners/admin-dashboard";
+import { AdminApp } from "@/components/admin/admin-app";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminListenerDashboard />;
+  return <AdminApp />;
 }

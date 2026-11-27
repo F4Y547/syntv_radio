@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  owner
+  administrator
+  editor
+}
+
+enum SubmissionStatus {
+  new
+  reviewed
+  resolved
+  spam
+}
+
+enum StationApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+model AdminUser {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  name         String?
+  passwordHash String
+  role         AdminRole   @default(editor)
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AuditLog[]  @relation("AuditActor")
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  ip        String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Station {
+  id          String                @id @default(cuid())
+  externalId  String?               @unique // Radio Browser UUID if linked
+  name        String
+  streamUrl   String
+  homepage    String?
+  favicon     String?
+  country     String?
+  countryCode String?
+  state       String?
+  language    String?
+  tags        String[]              @default([])
+  codec       String?
+  bitrate     Int?
+  description String?
+  isActive    Boolean               @default(true)
+  isFeatured  Boolean               @default(false)
+  isVerified  Boolean               @default(false)
+  approvalStatus StationApprovalStatus @default(approved)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  healthChecks StreamHealthCheck[]
+
+  @@index([name])
+  @@index([countryCode])
+  @@index([approvalStatus])
+}
+
+model Country {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  name      String
+  email     String
+  topic     String
+  station   String?
+  message   String
+  status    SubmissionStatus @default(new)
+  ip        String?
+  userAgent String?
+  delivery  String           @default("accepted")
+  notes     String?
+}
+
+model StreamHealthCheck {
+  id          String   @id @default(cuid())
+  stationId   String?
+  station     Station? @relation(fields: [stationId], references: [id], onDelete: SetNull)
+  streamUrl   String
+  ok          Boolean
+  statusCode  Int?
+  contentType String?
+  latencyMs   Int?
+  error       String?
+  checkedAt   DateTime @default(now())
+  checkedBy   String?
+
+  @@index([stationId, checkedAt])
+  @@index([checkedAt])
+}
+
+model SeoMetadata {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  title       String?
+  description String?
+  canonical   String?
+  ogImage     String?
+  noindex     Boolean  @default(false)
+  structuredData Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
+model AdConfig {
+  id              String   @id @default(cuid())
+  key             String   @unique @default("default")
+  enabled         Boolean  @default(false)
+  cmpVerified     Boolean  @default(false)
+  publisherId     String?
+  homeSlot        String?
+  listingSlot     String?
+  detailSlot      String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  updatedBy       String?
+}
+
+model AuditLog {
+  id        String     @id @default(cuid())
+  at        DateTime   @default(now())
+  actorId   String?
+  actor     AdminUser? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail String?
+  action    String
+  targetType String?
+  targetId  String?
+  detail    Json?
+  ip        String?
+
+  @@index([at])
+  @@index([actorId])
+  @@index([action])
+}
