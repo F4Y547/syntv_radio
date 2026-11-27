@@ -77,6 +77,9 @@ test("robots.txt and sitemap.xml are accessible and valid basics", async ({ requ
   for (const p of ["/stations", "/explore", "/about", "/contact", "/privacy-policy", "/terms"]) {
     expect(xml).toContain(p);
   }
+  // The generated sitemap must not claim build time as the modification date
+  // for every URL. Omit lastmod unless a real per-page date is available.
+  expect(xml).not.toContain("<lastmod>");
 });
 
 test("home includes structured data", async ({ page }) => {
