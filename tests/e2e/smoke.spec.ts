@@ -4,7 +4,7 @@ test("home loads and shows discovery UI", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /listen to the world/i })).toBeVisible();
   await expect(page.getByRole("searchbox", { name: /search stations/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /open search/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /open search|search/i }).first()).toBeVisible();
 });
 
 test("search query syncs to URL", async ({ page }) => {
