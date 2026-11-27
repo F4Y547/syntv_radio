@@ -98,8 +98,16 @@ export function validateContactPayload(payload: unknown): ValidationResult {
   }
 
   const input = payload as Record<string, unknown>;
-  if (clean(input.website, 200)) {
-    return { ok: false, code: "invalid_submission", message: "Invalid submission." };
+  // Honeypot: bots often fill hidden "website/company" fields. Keep the check
+  // but return a clear, user-recoverable message because browser autofill can
+  // occasionally populate hidden fields on aggressive password managers.
+  const honeypot = clean(input.website, 200) || clean(input.companyWebsite, 200);
+  if (honeypot) {
+    return {
+      ok: false,
+      code: "invalid_submission",
+      message: "Submission could not be verified. Please refresh the page and try again.",
+    };
   }
 
   const name = clean(input.name, 100);

@@ -35,7 +35,7 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
   const [station, setStation] = useState(initialStation.slice(0, 200));
   const [message, setMessage] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [website, setWebsite] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>("idle");
   const [serverError, setServerError] = useState("");
@@ -71,7 +71,7 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
           station: station.trim(),
           message: message.trim(),
           privacyAccepted,
-          website,
+          companyWebsite,
         }),
       });
       const data = (await response.json().catch(() => ({}))) as {
@@ -89,7 +89,7 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
         setStation("");
         setMessage("");
         setPrivacyAccepted(false);
-        setWebsite("");
+        setCompanyWebsite("");
         return;
       }
 
@@ -132,15 +132,20 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
   return (
     <form onSubmit={onSubmit} noValidate aria-busy={status === "submitting"} className="space-y-5">
       <div className="sr-only" aria-hidden="true">
-        <label htmlFor="contact-website">Leave this field empty</label>
+        <label htmlFor="contact-company-website">Leave this field empty</label>
         <input
-          id="contact-website"
-          name="website"
+          id="contact-company-website"
+          name="companyWebsite"
           type="text"
           tabIndex={-1}
           autoComplete="off"
-          value={website}
-          onChange={(event) => setWebsite(event.target.value)}
+          autoCorrect="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+          value={companyWebsite}
+          onChange={(event) => setCompanyWebsite(event.target.value)}
         />
       </div>
 

@@ -3,7 +3,7 @@ import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/s
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { siteUrl } from "@/lib/seo/site";
 
-const lastModified = new Date("2026-11-27T00:00:00.000Z");
+const lastModified = new Date();
 
 const staticPages: MetadataRoute.Sitemap = [
   { url: siteUrl, lastModified, changeFrequency: "daily", priority: 1 },

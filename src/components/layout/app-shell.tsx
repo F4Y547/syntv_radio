@@ -128,6 +128,12 @@ function ShellContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden pb-[calc(var(--player-height)+var(--mobile-nav-height)+env(safe-area-inset-bottom,0px)+0.75rem)]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:outline-none"
+      >
+        Skip to content
+      </a>
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,color-mix(in_srgb,var(--color-primary)_14%,transparent),transparent_60%),radial-gradient(ellipse_50%_40%_at_85%_0%,color-mix(in_srgb,var(--color-live)_8%,transparent),transparent_55%)]"
@@ -197,7 +203,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="container-page py-6 sm:py-8 lg:py-10">{children}</main>
+      <main id="main-content" tabIndex={-1} className="container-page py-6 sm:py-8 lg:py-10">{children}</main>
 
       <footer className="border-t border-border/60 py-10 pb-[calc(2.5rem+var(--mobile-nav-height))] text-sm text-muted-foreground md:pb-10">
         <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">

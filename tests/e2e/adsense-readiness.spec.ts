@@ -106,14 +106,16 @@ test.describe("AdSense readiness", () => {
     expect(body).toBe(`google.com, pub-6652257842391620, DIRECT, f08c47fec0942fa0`);
   });
 
-  test("AdSense script is present in head and no fake ad slots are rendered", async ({ page }) => {
+  test("AdSense is consent-gated and no fake ad slots are rendered", async ({ page }) => {
     await acceptEssentialConsent(page);
     await page.goto("/");
-    const script = page.locator('head script[src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6652257842391620"]');
-    await expect(script).toHaveCount(1);
+    // Advertising is disabled until valid slots + owner/CMP verification + consent.
+    // The account meta tag is present for verification; ad script/slots must not load.
     await expect(page.locator('[data-testid="ad-slot"]')).toHaveCount(0);
     await expect(page.locator('ins.adsbygoogle[data-ad-slot]')).toHaveCount(0);
     await expect(page.getByTestId("ad-slot")).toHaveCount(0);
+    const adScript = page.locator('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
+    await expect(adScript).toHaveCount(0);
   });
 
   test("sitemap includes public information pages and robots blocks admin", async ({ request }) => {

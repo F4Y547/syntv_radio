@@ -45,6 +45,18 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
   const now = options.now ?? Date.now;
 
   return async function POST(request: Request): Promise<Response> {
+    const origin = request.headers.get("origin");
+    const host = request.headers.get("host");
+    if (origin && host) {
+      try {
+        if (new URL(origin).host !== host) {
+          return json({ success: false, error: "Invalid request origin.", code: "invalid_origin" }, 403);
+        }
+      } catch {
+        return json({ success: false, error: "Invalid request origin.", code: "invalid_origin" }, 403);
+      }
+    }
+
     const ip = getClientIp(request);
     const rate = rateLimiter(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
     const rateHeaders = rateLimitHeaders(rate);
