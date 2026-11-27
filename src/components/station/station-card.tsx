@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Play, Pause, Heart, Radio, LoaderCircle, Signal } from "lucide-react";
 import type { Station } from "@/types/station";
 import { usePlayer } from "@/components/player/player-provider";
+import { useListenerCounts } from "@/components/listeners/listener-counts-provider";
 
 interface StationCardProps {
   station: Station;
@@ -12,11 +13,13 @@ interface StationCardProps {
 
 export function StationCard({ station }: StationCardProps) {
   const { currentStation, status, playStation, togglePlay, toggleFavorite, isFavorite } = usePlayer();
+  const { stationCounts, status: listenerStatus } = useListenerCounts();
   const [imgFailed, setImgFailed] = useState(false);
   const isCurrent = currentStation?.id === station.id;
   const isPlaying = isCurrent && status === "playing";
   const isLoading = isCurrent && status === "loading";
   const favorite = isFavorite(station.id);
+  const listeners = stationCounts[station.id];
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset image fallback when favicon changes
@@ -80,6 +83,14 @@ export function StationCard({ station }: StationCardProps) {
             </Link>
           </h3>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">{meta || "Global station"}</p>
+          {typeof listeners === "number" ? (
+            <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-foreground-muted">
+              <span className={`inline-flex h-1.5 w-1.5 rounded-full ${listeners > 0 ? "bg-live animate-pulse" : "bg-muted-foreground/50"}`} aria-hidden="true" />
+              <span className={listeners > 0 ? "text-live" : ""}>{listeners.toLocaleString()} listening</span>
+            </p>
+          ) : listenerStatus === "unavailable" ? (
+            <p className="mt-1 text-xs text-muted-foreground">Live count unavailable</p>
+          ) : null}
           <div className="mt-2 flex min-h-[28px] flex-wrap gap-1.5">
             {station.tags.slice(0, 2).map((tag) => (
               <span

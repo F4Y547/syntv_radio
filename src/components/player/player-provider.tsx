@@ -20,6 +20,7 @@ import {
   setVolume as persistVolume,
   toggleFavorite as persistToggleFavorite,
 } from "@/lib/storage/preferences";
+import { getPlaybackTracker } from "@/lib/listeners/playback-tracker";
 
 type PlayerStatus = "idle" | "loading" | "playing" | "error";
 
@@ -50,6 +51,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
   const isSwitchingRef = useRef(false);
+  const currentStationRef = useRef<Station | null>(null);
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setVolumeState(getVolume());
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  useEffect(() => {
+    currentStationRef.current = currentStation;
+  }, [currentStation]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -97,6 +103,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     const requestId = ++playRequestRef.current;
     isSwitchingRef.current = true;
+    void getPlaybackTracker().stop("switch");
     setError(null);
     setCurrentStation(station);
     setRecents(addRecent(station));
@@ -127,6 +134,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           const stats = getListeningStats();
           saveListeningStats({ ...stats, sessions: stats.sessions + 1, lastPlayedAt: Date.now() });
           setStatus("playing");
+          void getPlaybackTracker().start(station.id);
           return;
         } catch (playError) {
           if (requestId !== playRequestRef.current) return;
@@ -148,6 +156,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (status === "playing") {
       audio.pause();
       setStatus("idle");
+      void getPlaybackTracker().stop("pause");
       return;
     }
     setError(null);
@@ -155,10 +164,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setStatus("loading");
       await audio.play();
       setStatus("playing");
+      void getPlaybackTracker().start(currentStation.id);
     } catch {
       if (isSwitchingRef.current) return;
       setStatus("error");
       setError("Unable to resume playback. Try again or choose another station.");
+      void getPlaybackTracker().stop("resume-error");
     }
   }, [currentStation, status]);
 
@@ -191,6 +202,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, 15000);
     return () => window.clearInterval(id);
   }, [status]);
+
+  useEffect(() => {
+    return () => {
+      void getPlaybackTracker().stop("provider-unmount");
+    };
+  }, []);
 
   const setVolume = useCallback((nextVolume: number) => {
     const clamped = Math.min(1, Math.max(0, nextVolume));
@@ -242,13 +259,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       <audio
         ref={audioRef}
         preload="none"
-        onPlaying={() => { if (!isSwitchingRef.current) setStatus("playing"); }}
-        onPause={() => { if (!isSwitchingRef.current) setStatus((prev) => (prev === "error" ? prev : "idle")); }}
+        onPlaying={() => {
+          if (isSwitchingRef.current) return;
+          setStatus("playing");
+          const station = currentStationRef.current;
+          if (station) void getPlaybackTracker().start(station.id);
+        }}
+        onPause={() => {
+          if (isSwitchingRef.current) return;
+          setStatus((prev) => (prev === "error" ? prev : "idle"));
+          void getPlaybackTracker().stop("pause");
+        }}
         onWaiting={() => { if (!isSwitchingRef.current) setStatus("loading"); }}
         onError={() => {
           if (isSwitchingRef.current) return;
           setStatus("error");
           setError("Stream interrupted or unavailable. Please try another station.");
+          void getPlaybackTracker().stop("error");
         }}
       />
     </PlayerContext.Provider>

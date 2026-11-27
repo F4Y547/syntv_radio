@@ -13,6 +13,7 @@ import type { Station } from "@/types/station";
 import { StationCard } from "./station-card";
 import { StationGridSkeleton } from "./station-card-skeleton";
 import { usePlayer } from "@/components/player/player-provider";
+import { GlobalListenerCounter } from "@/components/listeners/global-listener-counter";
 
 interface Filters {
   countries: { name: string; code: string; stationCount: number }[];
@@ -183,6 +184,9 @@ export function StationBrowser() {
                   <Music2 size={14} className="text-primary" aria-hidden="true" />
                   <span><span className="font-semibold text-foreground">{filters.tags.length || "—"}</span> genres</span>
                 </div>
+              </div>
+              <div className="mt-5">
+                <GlobalListenerCounter />
               </div>
             </div>
 

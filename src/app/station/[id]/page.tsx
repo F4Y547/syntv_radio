@@ -5,6 +5,7 @@ import { MapPin, Signal, Languages, Heart } from "lucide-react";
 import { getStationById } from "@/lib/api/radio-browser";
 import { StationDetailActions } from "@/components/station/station-detail-actions";
 import { StationFavicon } from "@/components/station/station-favicon";
+import { StationListenerStats } from "@/components/listeners/station-listener-stats";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 
 export const instant = false;
@@ -120,6 +121,8 @@ export default async function StationPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      <StationListenerStats stationId={station.id} stationName={station.name} stationLogo={station.favicon} />
 
       <section aria-labelledby="station-details" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <h2 id="station-details" className="sr-only">Station details</h2>

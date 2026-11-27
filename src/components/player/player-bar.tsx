@@ -15,6 +15,7 @@ import {
 import { usePlayer } from "./player-provider";
 import { Equalizer } from "./equalizer";
 import { CanvasVisualizer } from "./canvas-visualizer";
+import { useListenerCounts } from "@/components/listeners/listener-counts-provider";
 
 export function PlayerBar() {
   const {
@@ -33,7 +34,9 @@ export function PlayerBar() {
     setSleepTimer,
     clearSleepTimer,
   } = usePlayer();
+  const { stationCounts } = useListenerCounts();
   const [sleepMenuOpen, setSleepMenuOpen] = useState(false);
+  const currentListeners = currentStation ? stationCounts[currentStation.id] : undefined;
   const [sleepRemaining, setSleepRemaining] = useState<string | null>(null);
   const [showViz, setShowViz] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
@@ -111,6 +114,11 @@ export function PlayerBar() {
                       <span className={`inline-flex h-2 w-2 rounded-full ${isPlaying ? "bg-live animate-pulse" : "bg-muted-foreground"}`} aria-hidden="true" />
                       <Equalizer active={isPlaying} />
                       {isLoading ? "Connecting" : isPlaying ? "Live" : "Paused"}
+                      {typeof currentListeners === "number" ? (
+                        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-live/90">
+                          · {currentListeners.toLocaleString()} listening
+                        </span>
+                      ) : null}
                     </span>
                     <span className="truncate">
                       {[currentStation.country, currentStation.language, currentStation.codec, currentStation.bitrate ? `${currentStation.bitrate} kbps` : null]

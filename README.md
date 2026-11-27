@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="./public/syntv-radio-logo.svg" alt="SYNTV RADIO" width="320" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./public/syntv-radio-logo.svg" />
+    <img src="./public/syntv-radio-logo-light.svg" alt="SYNTV RADIO" width="320" />
+  </picture>
 
   <p><strong>Premium world radio, tuned for the modern web.</strong></p>
 
@@ -91,14 +94,28 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-Optional environment variables for search engine verification:
+Create a local `.env.local` from [`.env.example`](./.env.example). Never commit real secrets.
 
-```env
-NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=your_google_verification_token
-NEXT_PUBLIC_BING_SITE_VERIFICATION=your_bing_verification_token
-```
+| Variable | Required | Purpose |
+|---|---|---|
+| `REDIS_URL` | Production multi-instance | Shared Redis-compatible store for real-time listener sessions/counts |
+| `LISTENER_SESSION_TTL` | Optional | Active session TTL in seconds (default `90`) |
+| `LISTENER_HEARTBEAT_INTERVAL` | Optional | Client heartbeat interval in seconds (default `25`) |
+| `LISTENER_UPDATE_INTERVAL` | Optional | Live SSE/poll update interval in seconds (default `5`) |
+| `LISTENER_ADMIN_TOKEN` | For admin analytics | Protects `/admin/listeners` and `/api/listeners/admin` |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Optional | Google Search Console verification |
+| `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Optional | Bing Webmaster Tools verification |
 
-> Do not commit `.env` files or secrets. Public `NEXT_PUBLIC_*` variables must never contain private values.
+> Public `NEXT_PUBLIC_*` variables must never contain private values.
+
+## Real-Time Listener Tracking
+
+SYNTV RADIO tracks **active playback sessions on SYNTV RADIO** (not global external station audience). Counts update in real time via SSE with polling fallback.
+
+- **Session lifecycle**: listener becomes active only after audio playback starts; heartbeat keeps session alive; pause/stop/error/pagehide removes or expires it.
+- **Storage**: Redis-compatible shared store when `REDIS_URL` is configured; documented in-memory fallback for development/single-instance only.
+- **Privacy**: anonymous random session IDs, no unnecessary personal data, rate-limited endpoints.
+- **Admin analytics**: protected by `LISTENER_ADMIN_TOKEN` at `/admin/listeners`.
 
 ## SEO & Indexing
 

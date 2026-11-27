@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Heart, Compass, Search, ListMusic, Globe2, Menu, X, Radio } from "lucide-react";
 import { PlayerProvider } from "@/components/player/player-provider";
 import { PlayerBar } from "@/components/player/player-bar";
+import { ListenerCountsProvider } from "@/components/listeners/listener-counts-provider";
 import { ThemeToggle } from "./theme-toggle";
 import { CommandPalette } from "./command-palette";
 import { KeyboardShortcuts } from "@/components/player/keyboard-shortcuts";
@@ -60,21 +61,21 @@ function ShellContent({ children }: { children: React.ReactNode }) {
             <Link href="/" className="group inline-flex w-fit shrink-0 items-center transition-opacity hover:opacity-95" aria-label="SYNTV RADIO home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo.svg?v=6"
+                src="/syntv-radio-logo.svg?v=7"
                 alt="SYNTV RADIO"
-                className="block h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:hidden"
-                width="454"
-                height="180"
+                className="block h-10 w-auto max-w-[160px] sm:h-12 sm:max-w-none [.light_&]:hidden"
+                width="1140"
+                height="395"
                 decoding="async"
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/syntv-radio-logo-light.svg?v=6"
+                src="/syntv-radio-logo-light.svg?v=7"
                 alt=""
                 aria-hidden="true"
-                className="hidden h-9 w-auto max-w-[160px] sm:h-11 sm:max-w-none [.light_&]:block"
-                width="454"
-                height="180"
+                className="hidden h-10 w-auto max-w-[160px] sm:h-12 sm:max-w-none [.light_&]:block"
+                width="1140"
+                height="395"
                 decoding="async"
               />
             </Link>
@@ -197,7 +198,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <LocaleProvider>
       <PlayerProvider>
-        <ShellContent>{children}</ShellContent>
+        <ListenerCountsProvider>
+          <ShellContent>{children}</ShellContent>
+        </ListenerCountsProvider>
       </PlayerProvider>
     </LocaleProvider>
   );
