@@ -27,14 +27,14 @@ test("home has core SEO metadata", async ({ page }) => {
 
 for (const route of PUBLIC_ROUTES) {
   test(`public route ${route.path} has title, description, canonical, h1`, async ({ page }) => {
-    await page.goto(route.path);
+    await page.goto(route.path, { waitUntil: "domcontentloaded" });
+    if (route.h1) {
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    }
     await expect(page).toHaveTitle(route.title);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /.+/);
     const canonical = page.locator('link[rel="canonical"]');
     await expect(canonical).toHaveAttribute("href", new RegExp(`https://syntv\\.online${route.path === "/" ? "/?" : route.path}$`));
-    if (route.h1) {
-      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
-    }
     // No unexpected noindex on public routes
     const robots = page.locator('meta[name="robots"]');
     if (await robots.count()) {
