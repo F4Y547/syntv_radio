@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Music2, Radio, Search } from "lucide-react";
 import { getCachedTags } from "@/lib/seo/data";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { genreSlug } from "@/lib/seo/slugs";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
@@ -52,9 +53,9 @@ export default async function GenresPage() {
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(collectionJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">
@@ -142,7 +143,7 @@ export default async function GenresPage() {
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-foreground-muted">
               Tag names come from the Radio Browser directory. Some are broad formats, some are specific scenes, and
-              some overlap. Fifty stations are shown on each genre page at most.
+              some overlap. Twenty-four stations are shown on each genre page at most.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

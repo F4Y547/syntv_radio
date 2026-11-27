@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Globe2, Radio, Search } from "lucide-react";
 import { getCachedCountries } from "@/lib/seo/data";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug } from "@/lib/seo/slugs";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
@@ -52,9 +53,9 @@ export default async function CountriesPage() {
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(collectionJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">

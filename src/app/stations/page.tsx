@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Globe2, Music2, Radio, Search } from "lucide-react";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { getCachedCountries, getCachedTags, getCachedTopStations } from "@/lib/seo/data";
@@ -58,8 +59,8 @@ export default async function StationsDirectoryPage() {
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(collectionJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">

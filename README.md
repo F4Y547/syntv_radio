@@ -130,6 +130,7 @@ Create a local `.env.local` from [`.env.example`](./.env.example). Never commit 
 | `RESEND_API_KEY` | One contact option | Official Resend SDK API key for contact email delivery |
 | `CONTACT_FROM_EMAIL` | With Resend | Verified Resend sender address (official: `SYNTV RADIO <hello@syntv.online>` after domain verification) |
 | `CONTACT_TO_EMAIL` | With Resend | Recipient address or comma-separated list (official: `hello@syntv.online`) |
+| `CONTACT_EMAIL_VERIFIED` | Server-only, default `false` | Publishes `hello@syntv.online` only after provider/DNS verification and a received test message; also requires a delivery setting that references that mailbox |
 | `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | Default publisher ID | Public AdSense publisher ID (`ca-pub-6652257842391620`) |
 | `NEXT_PUBLIC_ADSENSE_SLOT_HOME` | With ads | Real numeric homepage ad unit slot ID |
 | `NEXT_PUBLIC_ADSENSE_SLOT_LISTING` | With ads | Real numeric listing/country/genre ad unit slot ID |
@@ -154,7 +155,7 @@ SYNTV RADIO tracks **active playback sessions on SYNTV RADIO** (not global exter
 - The contact form validates input in the browser and on the server, uses a honeypot, IP rate limiting, and content-hash duplicate protection, and delivers through a validated webhook (preferred) or the official Resend SDK. Without delivery configuration it returns a clear `503 contact_not_configured` response and does not store messages.
 - Optional analytics and advertising choices are off by default. Global Privacy Control / Do Not Track signals force them off.
 - The first-party consent banner is a transparency and choice UI, **not** a Google-certified CMP. For regulated regions, the site owner must configure the certified CMP through the AdSense account before enabling ads.
-- No phone number, postal address, or company registration number is published. The official contact email is `hello@syntv.online` (mailto) and the contact form is the primary channel; email delivery/verification must be confirmed with the configured provider/DNS before claiming it is operational.
+- No phone number, postal address, or company registration number is published. `hello@syntv.online` appears on public pages only when `CONTACT_EMAIL_VERIFIED=true` and a delivery setting references that mailbox; until then the contact form is the only published official channel.
 
 ## AdSense Readiness
 

@@ -8,6 +8,7 @@ import { StationDetailActions } from "@/components/station/station-detail-action
 import { StationFavicon } from "@/components/station/station-favicon";
 import { StationListenerStats } from "@/components/listeners/station-listener-stats";
 import { StationCard } from "@/components/station/station-card";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 
@@ -115,8 +116,8 @@ export default async function StationPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(radioJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(radioJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">
           <li><Link href="/" className="hover:text-foreground">Home</Link></li>

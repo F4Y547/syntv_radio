@@ -4,6 +4,8 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { AdsProvider } from "@/components/ads/ads-provider";
 import { getAdsConfig } from "@/lib/ads/config";
+import { getPublicContactEmail } from "@/lib/contact/public-email";
+import { jsonLd } from "@/lib/seo/json-ld";
 
 const siteUrl = "https://syntv.online";
 
@@ -150,6 +152,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const ads = getAdsConfig();
+  const publicContactEmail = getPublicContactEmail();
   return (
     <html
       lang="en"
@@ -157,14 +160,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-background text-foreground antialiased">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(websiteJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }} />
         <AdsProvider
           value={{
             enabled: ads.enabled,
@@ -172,7 +169,7 @@ export default function RootLayout({
             slots: ads.slots,
           }}
         >
-          <AppShell>{children}</AppShell>
+          <AppShell publicContactEmail={publicContactEmail}>{children}</AppShell>
         </AdsProvider>
       </body>
     </html>

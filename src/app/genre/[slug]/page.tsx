@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Music2, Radio } from "lucide-react";
 import { FALLBACK_COUNTRIES, FALLBACK_TAGS, getCachedCountries, getCachedTags, getGenreBySlug, getGenreStations } from "@/lib/seo/data";
+import { getGenreEditorial } from "@/lib/seo/genre-editorial";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { StationCard } from "@/components/station/station-card";
@@ -23,13 +25,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!genre) return { title: "Genre not found", robots: { index: false, follow: false } };
 
   const title = `Live ${genre.name} Radio Stations Online — Listen Free`;
-  const description = `Listen to ${genre.stationCount.toLocaleString()} live ${genre.name} radio stations online. Discover free ${genre.name} internet radio on ${siteName}.`;
+  const editorial = getGenreEditorial(genre.name);
+  const description = editorial
+    ? editorial.summary
+    : `Listen to ${genre.stationCount.toLocaleString()} live ${genre.name} radio stations online. Discover free ${genre.name} internet radio on ${siteName}.`;
   const path = `/genre/${genreSlug(genre.name)}`;
 
   return {
     title,
     description,
     alternates: { canonical: path },
+    ...(editorial?.indexable === false ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title: `${title} | ${siteName}`,
       description,
@@ -78,6 +84,7 @@ export default async function GenrePage({ params }: Props) {
   ]);
 
   const path = `/genre/${genreSlug(genre.name)}`;
+  const editorial = getGenreEditorial(genre.name);
   const sampleCountries = countryCounts(stations);
   const fallbackCountries = [...countries].sort((a, b) => b.stationCount - a.stationCount).slice(0, 12);
   const popularGenres = [...tags]
@@ -122,9 +129,9 @@ export default async function GenrePage({ params }: Props) {
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(collectionJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">
@@ -151,6 +158,15 @@ export default async function GenrePage({ params }: Props) {
             or genre. This page shows a current sample of up to 24 stations in directory click-count order. Tags are
             community-maintained, so a station can appear under more than one style.
           </p>
+          {editorial ? (
+            <p className="max-w-3xl text-sm leading-relaxed text-foreground-muted">{editorial.summary}</p>
+          ) : null}
+          {editorial?.indexable === false ? (
+            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              This source label is kept for browsing but is excluded from the sitemap because it is a broad or
+              non-genre tag. Use the country or format directories for a more precise search.
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-3 pt-2">
             <Link href={`/?tag=${encodeURIComponent(genre.name)}`} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
               <Radio size={16} aria-hidden="true" /> Browse in player

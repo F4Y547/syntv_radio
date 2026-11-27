@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Globe2, Heart, Search, Smartphone } from "lucide-react";
 import { InfoCallout, InfoPage, InfoSection } from "@/components/content/info-page";
+import { getPublicContactEmail } from "@/lib/contact/public-email";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 
@@ -62,9 +64,11 @@ const features = [
 ];
 
 export default function AboutPage() {
+  const publicEmail = getPublicContactEmail();
+
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(aboutJsonLd) }} />
       <InfoPage
         eyebrow="About"
         title="Radio discovery without the clutter"
@@ -198,10 +202,14 @@ export default function AboutPage() {
 
         <InfoSection id="contact" title="Contact">
           <p>
-            Use the <Link href="/contact">contact form</Link> to reach the site operator, or email{" "}
-            <a href="mailto:hello@syntv.online" className="text-primary hover:underline">hello@syntv.online</a>. The
-            form supports general questions, technical support, station-owner reports, copyright and content-removal
-            requests, privacy requests, and advertising or partnership questions.
+            Use the <Link href="/contact">contact form</Link> to reach the site operator
+            {publicEmail ? (
+              <>
+                , or email <a href={`mailto:${publicEmail}`} className="text-primary hover:underline">{publicEmail}</a>
+              </>
+            ) : null}
+            . The form supports general questions, technical support, station-owner reports, copyright and
+            content-removal requests, privacy requests, and advertising or partnership questions.
           </p>
         </InfoSection>
       </InfoPage>

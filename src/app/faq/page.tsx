@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FaqList } from "@/components/content/faq-list";
 import { InfoPage, InfoSection } from "@/components/content/info-page";
 import { faqItems } from "@/lib/content/faq";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 
@@ -31,7 +32,7 @@ const faqJsonLd = {
 export default function FaqPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }} />
       <InfoPage
         eyebrow="Help"
         title="Frequently asked questions"

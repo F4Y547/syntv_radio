@@ -73,9 +73,12 @@ Configure the receiving endpoint to return 2xx only after it has accepted the pa
 RESEND_API_KEY=re_...
 CONTACT_FROM_EMAIL=SYNTV RADIO <hello@syntv.online>
 CONTACT_TO_EMAIL=hello@syntv.online
+CONTACT_EMAIL_VERIFIED=true
 ```
 
 `CONTACT_TO_EMAIL` accepts a comma-separated list. The visitor's validated email is passed as `replyTo`. The message is rendered as plain text and HTML-escaped HTML; user input is never inserted into raw HTML unescaped. Resend idempotency keys and the application's duplicate store prevent repeated submissions.
+
+`CONTACT_EMAIL_VERIFIED` is a server-only publication gate. Set it to `true` only after the domain/sender is verified in the provider and a test message has actually arrived in the `hello@syntv.online` mailbox. The address is hidden from About, Contact, the footer, and structured data until the flag is true **and** `CONTACT_FROM_EMAIL` or `CONTACT_TO_EMAIL` references that mailbox. Keep the contact form as the primary channel in all cases.
 
 The `contact_not_configured` code is returned with HTTP 503 only when neither provider is configured. An invalid or failing configured provider returns `contact_configuration_invalid` or `delivery_failed` instead; it never reports false success.
 
@@ -97,7 +100,7 @@ Keep the first-party banner as an additional transparency layer. Advertising cod
 
 ## Real AdSense ad unit setup
 
-1. Deploy the site and confirm `https://syntv.online/ads.txt` and the verification meta tag.
+1. Deploy the site and confirm `https://syntv.online/ads.txt`. In Google Search Console, obtain the site-verification token and set `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` before deploying; redeploy and confirm the `google-site-verification` meta tag appears. Without it, account/site ownership is not verified.
 2. In AdSense, create the actual ad units you intend to use. Use responsive/auto formats where appropriate.
 3. Copy each numeric slot ID from the AdSense dashboard. Slot IDs are long numeric strings, not account IDs or unit names.
 4. Set these variables in the hosting dashboard:

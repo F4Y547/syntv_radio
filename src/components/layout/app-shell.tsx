@@ -67,7 +67,13 @@ function isNavActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function ShellContent({ children }: { children: React.ReactNode }) {
+function ShellContent({
+  children,
+  publicContactEmail,
+}: {
+  children: React.ReactNode;
+  publicContactEmail: string | null;
+}) {
   const { t } = useI18n();
   const { openPreferences } = useConsent();
   const pathname = usePathname();
@@ -233,7 +239,11 @@ function ShellContent({ children }: { children: React.ReactNode }) {
               <li><Link href="/about" className="hover:text-foreground">About</Link></li>
               <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
               <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
-              <li><a href="mailto:hello@syntv.online" className="hover:text-foreground">hello@syntv.online</a></li>
+              {publicContactEmail ? (
+                <li>
+                  <a href={`mailto:${publicContactEmail}`} className="hover:text-foreground">{publicContactEmail}</a>
+                </li>
+              ) : null}
               <li><Link href="/stats" className="hover:text-foreground">Your listening stats</Link></li>
               <li><Link href="/#favorites" className="hover:text-foreground">Favorites</Link></li>
             </ul>
@@ -372,13 +382,19 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  publicContactEmail = null,
+}: {
+  children: React.ReactNode;
+  publicContactEmail?: string | null;
+}) {
   return (
     <LocaleProvider>
       <ConsentProvider>
         <PlayerProvider>
           <ListenerCountsProvider>
-            <ShellContent>{children}</ShellContent>
+            <ShellContent publicContactEmail={publicContactEmail}>{children}</ShellContent>
           </ListenerCountsProvider>
         </PlayerProvider>
       </ConsentProvider>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { InfoCallout, InfoPage, InfoSection } from "@/components/content/info-page";
+import { getPublicContactEmail } from "@/lib/contact/public-email";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { ContactForm } from "./contact-form";
@@ -24,29 +26,35 @@ const sections = [
   { id: "other-channels", title: "Other contact channels" },
 ];
 
-const contactJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "ContactPage",
-  name: "Contact SYNTV RADIO",
-  url: absoluteUrl("/contact"),
-  description:
-    "Contact form for technical support, station-owner requests, copyright reports, privacy requests, and general questions.",
-  isPartOf: { "@type": "WebSite", name: siteName, url: siteUrl },
-  mainEntity: {
-    "@type": "Organization",
-    name: siteName,
-    email: "hello@syntv.online",
-    contactPoint: [
-      {
-        "@type": "ContactPoint",
-        email: "hello@syntv.online",
-        contactType: "customer support",
-        availableLanguage: ["English"],
-        url: absoluteUrl("/contact"),
-      },
-    ],
-  },
-};
+function getContactJsonLd(publicEmail: string | null) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact SYNTV RADIO",
+    url: absoluteUrl("/contact"),
+    description:
+      "Contact form for technical support, station-owner requests, copyright reports, privacy requests, and general questions.",
+    isPartOf: { "@type": "WebSite", name: siteName, url: siteUrl },
+    ...(publicEmail
+      ? {
+          mainEntity: {
+            "@type": "Organization",
+            name: siteName,
+            email: publicEmail,
+            contactPoint: [
+              {
+                "@type": "ContactPoint",
+                email: publicEmail,
+                contactType: "customer support",
+                availableLanguage: ["English"],
+                url: absoluteUrl("/contact"),
+              },
+            ],
+          },
+        }
+      : {}),
+  };
+}
 
 interface Props {
   searchParams: Promise<{ topic?: string | string[]; station?: string | string[] }>;
@@ -56,10 +64,11 @@ export default async function ContactPage({ searchParams }: Props) {
   const params = await searchParams;
   const topic = typeof params.topic === "string" ? params.topic.slice(0, 40) : undefined;
   const station = typeof params.station === "string" ? params.station.slice(0, 200) : "";
+  const publicEmail = getPublicContactEmail();
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(getContactJsonLd(publicEmail)) }} />
       <InfoPage
         eyebrow="Contact"
         title="Talk to SYNTV RADIO"
@@ -76,15 +85,25 @@ export default async function ContactPage({ searchParams }: Props) {
         }
       >
         <InfoSection id="form" title="Send a message">
-          <InfoCallout title="Official contact channel" tone="info">
-            <p>
-              The form below is the primary contact channel. The official SYNTV RADIO email address is{" "}
-              <a href="mailto:hello@syntv.online" className="text-primary hover:underline">hello@syntv.online</a>.
-              Delivery depends on the configured email provider and domain verification; do not assume mailbox delivery
-              until provider/DNS verification is confirmed. SYNTV RADIO does not publish a phone number, postal address,
-              or company registration number. For non-sensitive technical reports, a public GitHub issue tracker is also
-              available.
-            </p>
+          <InfoCallout
+            title={publicEmail ? "Official contact channel" : "No unverified contact details are published"}
+            tone="info"
+          >
+            {publicEmail ? (
+              <p>
+                The form below is the primary contact channel. The official SYNTV RADIO email address is{" "}
+                <a href={`mailto:${publicEmail}`} className="text-primary hover:underline">{publicEmail}</a>. The
+                operator has verified this mailbox. SYNTV RADIO does not publish a phone number, postal address, or
+                company registration number. For non-sensitive technical reports, a public GitHub issue tracker is also
+                available.
+              </p>
+            ) : (
+              <p>
+                SYNTV RADIO does not publish a phone number, postal address, company registration number, or unverified
+                email address. The form below is the primary contact channel. For non-sensitive technical reports, a
+                public GitHub issue tracker is also available.
+              </p>
+            )}
           </InfoCallout>
           <div className="pt-2">
             <ContactForm initialTopic={topic} initialStation={station} />

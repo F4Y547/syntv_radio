@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Flame, Radio, Search, TrendingUp } from "lucide-react";
 import { getCachedTopStations } from "@/lib/seo/data";
+import { jsonLd } from "@/lib/seo/json-ld";
 import { StationCard } from "@/components/station/station-card";
 import { infoPageMetadata } from "@/lib/seo/metadata";
 import { absoluteUrl, siteUrl } from "@/lib/seo/site";
@@ -39,8 +40,8 @@ export default async function TrendingPage() {
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListJsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-2">
