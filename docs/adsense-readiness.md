@@ -8,7 +8,7 @@ This document describes the technical preparation in this repository and the man
 |---|---|
 | AdSense verification meta tag | Configured: `ca-pub-6652257842391620` |
 | `ads.txt` | Configured with the required publisher record |
-| Contact delivery code | Implemented; no webhook or Resend credentials configured in this repository |
+| Contact delivery code | Implemented; Resend domain verified in API/DNS checks (2026-11-27), test message accepted by Resend; inbox receipt and deployed end-to-end delivery not yet confirmed. No credentials committed. |
 | Google-certified CMP | **Not configured or verified**. The first-party banner is not a certified CMP. |
 | Real ad unit slot IDs | **Not supplied**. No slot IDs are committed or invented. |
 | Advertising | **Disabled by default**. No script, no containers, no placements render. |
@@ -65,20 +65,26 @@ Configure the receiving endpoint to return 2xx only after it has accepted the pa
 
 ### Option B: Resend
 
-1. Create a Resend account and add/verify the domain used for `CONTACT_FROM_EMAIL` in **Domains**. Complete the DNS records Resend shows (SPF/DKIM and any provider-required records; add DMARC as recommended below).
+1. Create a Resend account and add/verify the domain used for `CONTACT_FROM_EMAIL` in **Domains**. Complete the **exact DNS records Resend shows** (DKIM/SPF/return-path as TXT/MX/CNAME as provided). **Do not invent DKIM values.** Add/maintain DMARC as recommended below.
 2. Create an API key in **API Keys** with permission to send email.
-3. Set these variables in the hosting dashboard after domain/sender verification:
+3. Set these variables in the hosting dashboard **after** domain/sender verification and a confirmed real delivery test:
 
 ```text
 RESEND_API_KEY=re_...
 CONTACT_FROM_EMAIL=SYNTV RADIO <hello@syntv.online>
 CONTACT_TO_EMAIL=hello@syntv.online
-CONTACT_EMAIL_VERIFIED=true
+CONTACT_EMAIL_VERIFIED=false  # set true only after deployed real delivery test is confirmed
 ```
 
 `CONTACT_TO_EMAIL` accepts a comma-separated list. The visitor's validated email is passed as `replyTo`. The message is rendered as plain text and HTML-escaped HTML; user input is never inserted into raw HTML unescaped. Resend idempotency keys and the application's duplicate store prevent repeated submissions.
 
 `CONTACT_EMAIL_VERIFIED` is a server-only publication gate. Set it to `true` only after the domain/sender is verified in the provider and a test message has actually arrived in the `hello@syntv.online` mailbox. The address is hidden from About, Contact, the footer, and structured data until the flag is true **and** `CONTACT_FROM_EMAIL` or `CONTACT_TO_EMAIL` references that mailbox. Keep the contact form as the primary channel in all cases.
+
+#### Observed evidence (2026-11-27, local checks only)
+
+- Resend API reported `syntv.online` domain status **verified** (region `us-east-1`). Public DNS checks observed DKIM TXT `resend._domainkey.syntv.online`, `send.syntv.online` CNAME `send.forge.rmta.net`, `hello.syntv.online` CNAME `links2.resend-dns.com`, MX `receive.forge.rmta.net`, DMARC `v=DMARC1; p=none;`.
+- A real Resend API delivery test was **accepted** (HTTP 200, id `01a21dfa-e3e0-72f5-9216-5bbdc9ffbe5e`, error null). **Inbox receipt was not confirmed by this agent**; confirm in the `hello@syntv.online` mailbox and Resend logs before treating email as operational.
+- Local `.env.local` contains Resend config for development only (gitignored). Deployment env vars and deployed end-to-end `/contact` delivery test remain required.
 
 The `contact_not_configured` code is returned with HTTP 503 only when neither provider is configured. An invalid or failing configured provider returns `contact_configuration_invalid` or `delivery_failed` instead; it never reports false success.
 
