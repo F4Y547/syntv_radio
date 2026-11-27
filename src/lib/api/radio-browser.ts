@@ -21,6 +21,8 @@ interface RadioBrowserStation {
 }
 
 const RADIO_BROWSER_BASE = "https://de1.api.radio-browser.info/json";
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_ATTEMPTS = 3;
 
 function normalizeStation(station: RadioBrowserStation): Station {
   return {
@@ -50,6 +52,37 @@ function normalizeStation(station: RadioBrowserStation): Station {
   };
 }
 
+async function fetchJson<T>(path: string, revalidate: number): Promise<T | null> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(`${RADIO_BROWSER_BASE}${path}`, {
+        headers: {
+          "User-Agent": "SyntvRadio/1.0",
+          Accept: "application/json",
+        },
+        next: { revalidate },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+
+      if (response.ok) return (await response.json()) as T;
+
+      lastError = new Error(`Radio Browser request failed: ${response.status}`);
+      if (response.status < 500 && response.status !== 429) break;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < MAX_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+
+  console.warn("Radio Browser request failed after retries", lastError);
+  return null;
+}
+
 export async function searchStations(
   params: StationSearchParams = {},
 ): Promise<Station[]> {
@@ -67,29 +100,13 @@ export async function searchStations(
   query.set("reverse", String(params.reverse ?? true));
   query.set("hidebroken", "true");
 
-  const response = await fetch(`${RADIO_BROWSER_BASE}${endpoint}?${query.toString()}`, {
-    headers: {
-      "User-Agent": "SyntvRadio/1.0",
-      Accept: "application/json",
-    },
-    next: { revalidate: 300 },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Radio Browser request failed: ${response.status}`);
-  }
-
-  const data = (await response.json()) as RadioBrowserStation[];
-  return data.map(normalizeStation);
+  const data = await fetchJson<RadioBrowserStation[]>(`${endpoint}?${query.toString()}`, 300);
+  return data?.map(normalizeStation) ?? [];
 }
 
 export async function getCountries(): Promise<{ name: string; code: string; stationCount: number }[]> {
-  const response = await fetch(`${RADIO_BROWSER_BASE}/countries`, {
-    headers: { "User-Agent": "SyntvRadio/1.0", Accept: "application/json" },
-    next: { revalidate: 3600 },
-  });
-  if (!response.ok) throw new Error("Failed to load countries");
-  const data = (await response.json()) as Array<{ name: string; iso_3166_1: string; stationcount: number }>;
+  const data = await fetchJson<Array<{ name: string; iso_3166_1: string; stationcount: number }>>("/countries", 3600);
+  if (!data) return [];
   return data
     .filter((c) => c.iso_3166_1 && c.name)
     .map((c) => ({ name: c.name, code: c.iso_3166_1, stationCount: c.stationcount }))
@@ -97,24 +114,15 @@ export async function getCountries(): Promise<{ name: string; code: string; stat
 }
 
 export async function getTags(): Promise<{ name: string; stationCount: number }[]> {
-  const response = await fetch(`${RADIO_BROWSER_BASE}/tags?limit=60&order=stationcount&reverse=true`, {
-    headers: { "User-Agent": "SyntvRadio/1.0", Accept: "application/json" },
-    next: { revalidate: 3600 },
-  });
-  if (!response.ok) throw new Error("Failed to load tags");
-  const data = (await response.json()) as Array<{ name: string; stationcount: number }>;
+  const data = await fetchJson<Array<{ name: string; stationcount: number }>>("/tags?limit=60&order=stationcount&reverse=true", 3600);
+  if (!data) return [];
   return data
     .filter((t) => t.name && t.stationcount > 10)
     .map((t) => ({ name: t.name, stationCount: t.stationcount }));
 }
 
 export async function getStationById(id: string): Promise<Station | null> {
-  const response = await fetch(`${RADIO_BROWSER_BASE}/stations/byuuid/${encodeURIComponent(id)}`, {
-    headers: { "User-Agent": "SyntvRadio/1.0", Accept: "application/json" },
-    next: { revalidate: 300 },
-  });
-  if (!response.ok) throw new Error(`Radio Browser request failed: ${response.status}`);
-  const data = (await response.json()) as RadioBrowserStation[];
-  if (!data.length) return null;
+  const data = await fetchJson<RadioBrowserStation[]>(`/stations/byuuid/${encodeURIComponent(id)}`, 300);
+  if (!data?.length) return null;
   return normalizeStation(data[0]);
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Globe2, Radio } from "lucide-react";
-import { getCachedCountries, getCachedTags, getCountryBySlug, getCountryStations } from "@/lib/seo/data";
+import { FALLBACK_COUNTRIES, FALLBACK_TAGS, getCachedCountries, getCachedTags, getCountryBySlug, getCountryStations } from "@/lib/seo/data";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { StationCard } from "@/components/station/station-card";
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const countries = await getCachedCountries().catch(() => []);
+  const countries = await getCachedCountries().catch(() => FALLBACK_COUNTRIES);
   return countries.slice(0, 120).map((c) => ({ slug: countrySlug(c.name, c.code) }));
 }
 
@@ -66,8 +66,8 @@ export default async function CountryPage({ params }: Props) {
 
   const [stations, countries, tags] = await Promise.all([
     getCountryStations(country.code, 24).catch(() => []),
-    getCachedCountries().catch(() => []),
-    getCachedTags().catch(() => []),
+    getCachedCountries().catch(() => FALLBACK_COUNTRIES),
+    getCachedTags().catch(() => FALLBACK_TAGS),
   ]);
 
   const path = `/country/${countrySlug(country.name, country.code)}`;

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Music2, Radio } from "lucide-react";
-import { getCachedCountries, getCachedTags, getGenreBySlug, getGenreStations } from "@/lib/seo/data";
+import { FALLBACK_COUNTRIES, FALLBACK_TAGS, getCachedCountries, getCachedTags, getGenreBySlug, getGenreStations } from "@/lib/seo/data";
 import { countrySlug, genreSlug } from "@/lib/seo/slugs";
 import { absoluteUrl, siteName, siteUrl } from "@/lib/seo/site";
 import { StationCard } from "@/components/station/station-card";
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const tags = await getCachedTags().catch(() => []);
+  const tags = await getCachedTags().catch(() => FALLBACK_TAGS);
   return tags.slice(0, 60).map((t) => ({ slug: genreSlug(t.name) }));
 }
 
@@ -73,8 +73,8 @@ export default async function GenrePage({ params }: Props) {
 
   const [stations, countries, tags] = await Promise.all([
     getGenreStations(genre.name, 24).catch(() => []),
-    getCachedCountries().catch(() => []),
-    getCachedTags().catch(() => []),
+    getCachedCountries().catch(() => FALLBACK_COUNTRIES),
+    getCachedTags().catch(() => FALLBACK_TAGS),
   ]);
 
   const path = `/genre/${genreSlug(genre.name)}`;
