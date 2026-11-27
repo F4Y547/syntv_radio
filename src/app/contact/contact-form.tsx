@@ -89,6 +89,7 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
         setStation("");
         setMessage("");
         setPrivacyAccepted(false);
+        setWebsite("");
         return;
       }
 
@@ -112,8 +113,8 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
         <CheckCircle2 size={24} className="text-live" aria-hidden="true" />
         <h2 className="mt-3 font-display text-xl font-semibold text-foreground">Message sent</h2>
         <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
-          Thank you. Your message was delivered to the site operator. Please keep an eye on the email address you
-          provided for a reply. We cannot promise a specific response time.
+          Thank you. Your message was accepted for delivery. Please keep an eye on the email address you provided for
+          a reply. We cannot promise a specific response time.
         </p>
         <button
           type="button"
@@ -129,7 +130,7 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
   const errorSummary = Object.values(errors).filter(Boolean);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
+    <form onSubmit={onSubmit} noValidate aria-busy={status === "submitting"} className="space-y-5">
       <div className="sr-only" aria-hidden="true">
         <label htmlFor="contact-website">Leave this field empty</label>
         <input
@@ -276,6 +277,11 @@ export function ContactForm({ initialTopic, initialStation = "" }: ContactFormPr
           {status === "submitting" ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}
           {status === "submitting" ? "Sending..." : "Send message"}
         </button>
+        {status === "submitting" && (
+          <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
+            Sending your message through the configured delivery provider…
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Messages are rate-limited to prevent abuse. Do not send passwords, payment data, or identity documents.
         </p>

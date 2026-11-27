@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
+import { AdsProvider } from "@/components/ads/ads-provider";
+import { getAdsConfig } from "@/lib/ads/config";
 
 const siteUrl = "https://syntv.online";
 
@@ -147,19 +149,13 @@ const organizationJsonLd = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const ads = getAdsConfig();
   return (
     <html
       lang="en"
       className={`${manrope.variable} ${spaceGrotesk.variable} h-full`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6652257842391620"
-          crossOrigin="anonymous"
-        ></script>
-      </head>
       <body className="min-h-full bg-background text-foreground antialiased">
         <script
           type="application/ld+json"
@@ -169,7 +165,15 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        <AppShell>{children}</AppShell>
+        <AdsProvider
+          value={{
+            enabled: ads.enabled,
+            clientId: ads.clientId,
+            slots: ads.slots,
+          }}
+        >
+          <AppShell>{children}</AppShell>
+        </AdsProvider>
       </body>
     </html>
   );

@@ -2,16 +2,19 @@
 
 import { useEffect } from "react";
 import { useConsent } from "@/lib/consent";
-import { getAdSenseClient, isAdvertisingEnabled } from "./adsense-script";
+import { canShowAd, isValidAdSlotId, type AdSlotKey } from "@/lib/ads/config";
+import { useAds } from "./ads-provider";
 
 export type AdFormat = "auto" | "fluid" | "horizontal" | "rectangle" | "vertical";
 
-interface AdSlotProps {
+export interface AdSlotProps {
+  /** Env-backed placement. Country and genre pages share the listing slot. */
+  placement?: AdSlotKey;
   /**
-   * Ad unit slot ID from the publisher's AdSense account. There is deliberately
-   * no default: arbitrary or invented slot IDs must never be used.
+   * Optional explicit numeric slot ID from the publisher's AdSense account.
+   * There is deliberately no default or invented ID.
    */
-  slotId: string;
+  slotId?: string;
   format?: AdFormat;
   className?: string;
   minHeight?: number;
@@ -21,22 +24,22 @@ interface AdSlotProps {
 /**
  * Responsive, consent-gated AdSense container. It reserves vertical space to
  * avoid layout shift, is visually labelled as an advertisement, and returns
- * nothing until advertising is enabled and the visitor has opted in.
+ * nothing until activation checks and visitor consent pass.
  *
  * Do not place an AdSlot over the player, navigation, or any playback control.
  */
 export function AdSlot({
+  placement,
   slotId,
   format = "auto",
   className = "",
   minHeight = 250,
   label = "Advertisement",
 }: AdSlotProps) {
+  const ads = useAds();
   const { consent } = useConsent();
-  const canRender =
-    isAdvertisingEnabled() &&
-    consent?.advertising === true &&
-    /^\d{6,20}$/.test(slotId.trim());
+  const resolvedSlot = placement ? ads.slots[placement] : slotId?.trim() ?? null;
+  const canRender = canShowAd(ads, consent) && isValidAdSlotId(resolvedSlot);
 
   useEffect(() => {
     if (!canRender) return;
@@ -47,12 +50,9 @@ export function AdSlot({
     } catch {
       // The AdSense library may be blocked; the labelled container remains empty.
     }
-  }, [canRender, slotId]);
+  }, [canRender, resolvedSlot]);
 
-  if (!canRender) return null;
-
-  const client = getAdSenseClient();
-  if (!client) return null;
+  if (!canRender || !ads.clientId || !isValidAdSlotId(resolvedSlot)) return null;
 
   return (
     <aside aria-label={label} className={className} data-testid="ad-slot">
@@ -64,8 +64,8 @@ export function AdSlot({
         <ins
           className="adsbygoogle block"
           style={{ display: "block", minHeight: `${Math.max(100, minHeight)}px` }}
-          data-ad-client={client}
-          data-ad-slot={slotId.trim()}
+          data-ad-client={ads.clientId}
+          data-ad-slot={resolvedSlot.trim()}
           data-ad-format={format}
           data-full-width-responsive="true"
         />

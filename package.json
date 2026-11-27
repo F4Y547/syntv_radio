@@ -25,6 +25,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-globe.gl": "^2.38.0",
+    "resend": "^6.40.1",
     "three": "^0.187.0"
   },
   "devDependencies": {
