@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 async function expectNoCriticalOrSeriousViolations(page: Page, context: string) {
   const results = await new AxeBuilder({ page })
-    .disableRules(["color-contrast"]) // Contrast handled by design review; automated gradient checks can be noisy.
+    .withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"])
     .analyze();
   const bad = results.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
   expect(
@@ -107,9 +107,9 @@ test.describe("accessibility (WCAG 2.2 AA-oriented)", () => {
     }
   });
 
-  test("admin dashboard has no critical/serious axe violations", async ({ page }) => {
-    await page.goto("/admin/listeners", { waitUntil: "domcontentloaded" });
+  test("admin page has no critical/serious axe violations", async ({ page }) => {
+    await page.goto("/admin", { waitUntil: "domcontentloaded" });
     await page.getByRole("heading", { level: 1 }).first().waitFor();
-    await expectNoCriticalOrSeriousViolations(page, "admin listener page");
+    await expectNoCriticalOrSeriousViolations(page, "admin page");
   });
 });

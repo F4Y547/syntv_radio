@@ -96,6 +96,20 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Run the production server |
 | `npm run lint` | Run ESLint |
 | `npm run test:e2e` | Run Playwright end-to-end tests |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:migrate` | Apply Prisma migrations in production |
+| `npm run db:migrate:dev` | Create/apply migrations in development |
+
+## Admin Platform & Database
+
+Production admin features require a persistent PostgreSQL database. **Do not use JSON files or in-memory state as production multi-instance admin storage.**
+
+1. Set `DATABASE_URL`.
+2. Run `npm run db:generate` and `npm run db:migrate`.
+3. Create the first owner user securely (scrypt hash via `src/lib/admin/password.ts`); do not commit credentials.
+4. Sign in at `/admin`.
+
+Admin features: session login/logout (HttpOnly cookie, scrypt, revocable DB sessions), RBAC (`owner`, `administrator`, `editor`), station/country/genre CRUD, station approval/verification workflow, contact submission management, stream health history, SEO metadata management, ad configuration, audit logs. Mutating admin APIs enforce same-origin checks, rate limiting, RBAC, and no-store responses.
 
 ## Environment Variables
 
@@ -107,6 +121,7 @@ Create a local `.env.local` from [`.env.example`](./.env.example). Never commit 
 | `LISTENER_SESSION_TTL` | Optional | Active session TTL in seconds (default `90`) |
 | `LISTENER_HEARTBEAT_INTERVAL` | Optional | Client heartbeat interval in seconds (default `25`) |
 | `LISTENER_UPDATE_INTERVAL` | Optional | Live SSE/poll update interval in seconds (default `5`) |
+| `DATABASE_URL` | Admin features | PostgreSQL connection string for Prisma-backed admin/DB features |
 | `LISTENER_ADMIN_TOKEN` | For admin analytics | Protects `/admin/listeners` and `/api/listeners/admin` |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Optional | Google Search Console verification |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | Optional | Bing Webmaster Tools verification |
