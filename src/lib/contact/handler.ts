@@ -1,5 +1,6 @@
-import { checkRateLimit, rateLimitHeaders } from "../listeners/rate-limit";
+import { checkRateLimitAsync, rateLimitHeaders } from "../listeners/rate-limit";
 import { getClientIp } from "../listeners/validation";
+import { recordContactSubmission } from "../admin/store";
 import { getContactDeliveryConfig, type ContactDeliveryConfig } from "./config";
 import { createContactDedupeStore, type ContactDedupeStore } from "./dedupe";
 import { ContactDeliveryError, deliverContact, type DeliveryDependencies } from "./delivery";
@@ -12,7 +13,7 @@ const RATE_WINDOW_MS = 10 * 60_000;
 export interface ContactHandlerOptions extends DeliveryDependencies {
   config?: ContactDeliveryConfig;
   dedupe?: ContactDedupeStore;
-  rateLimiter?: typeof checkRateLimit;
+  rateLimiter?: (key: string, limit: number, windowMs: number) => ReturnType<typeof checkRateLimitAsync> | import("../listeners/rate-limit").RateLimitResult;
   now?: () => number;
 }
 
@@ -41,7 +42,7 @@ async function contentHash(value: string): Promise<string> {
 export function createContactHandler(options: ContactHandlerOptions = {}) {
   const config = options.config ?? getContactDeliveryConfig();
   const dedupe = options.dedupe ?? createContactDedupeStore();
-  const rateLimiter = options.rateLimiter ?? checkRateLimit;
+  const rateLimiter = options.rateLimiter ?? checkRateLimitAsync;
   const now = options.now ?? Date.now;
 
   return async function POST(request: Request): Promise<Response> {
@@ -58,7 +59,7 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
     }
 
     const ip = getClientIp(request);
-    const rate = rateLimiter(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
+    const rate = await rateLimiter(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
     const rateHeaders = rateLimitHeaders(rate);
 
     if (!rate.allowed) {
@@ -156,6 +157,17 @@ export function createContactHandler(options: ContactHandlerOptions = {}) {
     }
 
     dedupe.add(idempotencyKey, now());
+    try {
+      await recordContactSubmission({
+        name: contact.name,
+        email: contact.email,
+        topic: contact.topic,
+        station: contact.station,
+        message: contact.message,
+      });
+    } catch (err) {
+      console.error("[contact] submission accepted but failed to persist admin record", err);
+    }
     return json({ success: true }, 200, rateHeaders);
   };
 }

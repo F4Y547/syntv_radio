@@ -67,3 +67,14 @@ export function canShowAd(
 ): boolean {
   return config.enabled && config.clientId !== null && consent?.advertising === true;
 }
+
+export function getPublicAdSenseConfig(env: Env = process.env) {
+  const cfg = getAdsConfig(env);
+  return {
+    enabled: cfg.enabled,
+    cmpVerified: env.ADS_CMP_VERIFIED === "true",
+    publisherId: cfg.clientId,
+    slotIds: [cfg.slots.home, cfg.slots.listing, cfg.slots.detail],
+    reasons: cfg.reasons,
+  };
+}

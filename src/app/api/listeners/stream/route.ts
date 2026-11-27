@@ -1,9 +1,9 @@
-import { getListenerStore, getClientIp, checkRateLimit, listenerConfig } from "@/lib/listeners";
+import { getListenerStore, getClientIp, checkRateLimitAsync, listenerConfig } from "@/lib/listeners";
 
 
 export async function GET(request: Request) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`listeners:stream:${ip}`, 30, 60_000);
+  const rl = await checkRateLimitAsync(`listeners:stream:${ip}`, 30, 60_000);
   if (!rl.allowed) {
     return new Response("Too many requests", { status: 429 });
   }

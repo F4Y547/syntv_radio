@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getListenerStore, isValidStationId, getClientIp, checkRateLimit, rateLimitHeaders } from "@/lib/listeners";
+import { getListenerStore, isValidStationId, getClientIp, checkRateLimitAsync, rateLimitHeaders } from "@/lib/listeners";
 
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`listeners:station:${ip}`, 120, 60_000);
+  const rl = await checkRateLimitAsync(`listeners:station:${ip}`, 120, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { success: false, error: "Too many requests" },
