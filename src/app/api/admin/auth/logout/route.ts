@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE, revokeAdminSession, getCurrentAdmin, assertSameOrigin } from "@/lib/admin/auth";
+import { SESSION_COOKIE, revokeAdminSession, getCurrentAdmin, assertSameOrigin, assertCsrf } from "@/lib/admin/auth";
 import { addAuditLog } from "@/lib/admin/audit";
 import { getClientIp } from "@/lib/listeners/validation";
 
@@ -9,6 +9,10 @@ export async function POST(request: Request) {
   if (originErr) return NextResponse.json({ ok: false, error: "Invalid origin" }, { status: 403 });
 
   const user = await getCurrentAdmin();
+  if (user) {
+    const csrfErr = assertCsrf(request, user.csrfToken);
+    if (csrfErr) return NextResponse.json({ ok: false, error: "Invalid CSRF token" }, { status: 403 });
+  }
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (token) await revokeAdminSession(token);

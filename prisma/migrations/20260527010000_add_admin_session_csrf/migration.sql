@@ -1,0 +1,1 @@
+ALTER TABLE "AdminSession" ADD COLUMN "csrfToken" TEXT NOT NULL DEFAULT '';

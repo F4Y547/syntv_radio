@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertSameOrigin, requireAdmin } from "./auth";
+import { assertCsrf, assertSameOrigin, requireAdmin } from "./auth";
 import { hasDatabase } from "@/lib/db";
 import { checkRateLimitAsync, rateLimitHeaders } from "@/lib/listeners/rate-limit";
 import { getClientIp } from "@/lib/listeners/validation";
@@ -21,6 +21,10 @@ export async function adminGuard(request: Request, opts?: { minimum?: AdminRole;
   const auth = await requireAdmin(opts?.minimum ?? "editor");
   if ("response" in auth) {
     return { error: new NextResponse(auth.response.body, { status: auth.response.status, headers: { ...Object.fromEntries(auth.response.headers), ...rateLimitHeaders(rl) } }), rl };
+  }
+  if (opts?.mutate) {
+    const csrfErr = assertCsrf(request, auth.user.csrfToken);
+    if (csrfErr) return { error: NextResponse.json({ ok: false, error: "Invalid CSRF token" }, { status: 403, headers: rateLimitHeaders(rl) }), rl };
   }
   return { user: auth.user, rl };
 }

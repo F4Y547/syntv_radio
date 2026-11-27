@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClientIp, checkRateLimitAsync, rateLimitHeaders } from "@/lib/listeners";
-import { getCurrentAdmin, assertSameOrigin } from "@/lib/admin/auth";
+import { getCurrentAdmin, assertSameOrigin, assertCsrf } from "@/lib/admin/auth";
 import { hasDatabase, getPrisma } from "@/lib/db";
 import { addAuditLog } from "@/lib/admin/audit";
 
@@ -11,13 +11,13 @@ function isPrivateHost(hostname: string) {
 
 async function isAuthorized(request: Request) {
   const user = await getCurrentAdmin();
-  if (user) return { ok: true as const, actorEmail: user.email, actorId: user.id };
+  if (user) return { ok: true as const, actorEmail: user.email, actorId: user.id, csrfToken: user.csrfToken, session: true as const };
   // Legacy token fallback
   const token = process.env.LISTENER_ADMIN_TOKEN?.trim();
   if (token) {
     const auth = request.headers.get("authorization") ?? "";
     const header = request.headers.get("x-listener-admin-token") ?? "";
-    if (auth === `Bearer ${token}` || header === token) return { ok: true as const, actorEmail: "token-admin", actorId: null };
+    if (auth === `Bearer ${token}` || header === token) return { ok: true as const, actorEmail: "token-admin", actorId: null, csrfToken: "", session: false as const };
   }
   return { ok: false as const };
 }
@@ -29,9 +29,10 @@ export async function POST(request: Request) {
   const auth = await isAuthorized(request);
   if (!auth.ok) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401, headers: rateLimitHeaders(rl) });
   const originErr = await assertSameOrigin(request).catch(() => null);
-  // Allow legacy token calls without origin in some tooling, but prefer origin; for session-based this is enforced by browser.
-  if (request.headers.get("cookie")?.includes("syntv_admin_session") && originErr) {
-    return NextResponse.json({ ok: false, error: "Invalid origin" }, { status: 403, headers: rateLimitHeaders(rl) });
+  if (auth.session) {
+    if (originErr) return NextResponse.json({ ok: false, error: "Invalid origin" }, { status: 403, headers: rateLimitHeaders(rl) });
+    const csrfErr = assertCsrf(request, auth.csrfToken);
+    if (csrfErr) return NextResponse.json({ ok: false, error: "Invalid CSRF token" }, { status: 403, headers: rateLimitHeaders(rl) });
   }
 
   let body: unknown;

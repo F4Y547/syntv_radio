@@ -15,6 +15,10 @@ export interface AdminSessionUser {
   role: AdminRole;
 }
 
+export interface AdminSessionInfo extends AdminSessionUser {
+  csrfToken: string;
+}
+
 export function roleRank(role: AdminRole): number {
   if (role === "owner") return 3;
   if (role === "administrator") return 2;
@@ -38,18 +42,20 @@ export function sessionCookieOptions(expiresAt: Date) {
 export async function createAdminSession(userId: string, remember = false, meta?: { ip?: string | null; userAgent?: string | null }) {
   const prisma = getPrisma();
   const token = generateSessionToken();
+  const csrfToken = generateSessionToken();
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + (remember ? SESSION_REMEMBER_MS : SESSION_TTL_MS));
   await prisma.adminSession.create({
     data: {
       userId,
       tokenHash,
+      csrfToken,
       expiresAt,
       ip: meta?.ip ?? null,
       userAgent: meta?.userAgent?.slice(0, 500) ?? null,
     },
   });
-  return { token, expiresAt };
+  return { token, csrfToken, expiresAt };
 }
 
 export async function revokeAdminSession(token: string) {
@@ -59,7 +65,7 @@ export async function revokeAdminSession(token: string) {
   await prisma.adminSession.updateMany({ where: { tokenHash, revokedAt: null }, data: { revokedAt: new Date() } });
 }
 
-export async function getCurrentAdmin(): Promise<AdminSessionUser | null> {
+export async function getCurrentAdmin(): Promise<AdminSessionInfo | null> {
   if (!hasDatabase()) return null;
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -74,10 +80,10 @@ export async function getCurrentAdmin(): Promise<AdminSessionUser | null> {
   if (session.revokedAt) return null;
   if (session.expiresAt.getTime() <= Date.now()) return null;
   if (!session.user.active) return null;
-  return { id: session.user.id, email: session.user.email, name: session.user.name, role: session.user.role };
+  return { id: session.user.id, email: session.user.email, name: session.user.name, role: session.user.role, csrfToken: session.csrfToken };
 }
 
-export async function requireAdmin(minimum: AdminRole = "editor"): Promise<{ user: AdminSessionUser } | { response: NextResponse }> {
+export async function requireAdmin(minimum: AdminRole = "editor"): Promise<{ user: AdminSessionInfo } | { response: NextResponse }> {
   const user = await getCurrentAdmin();
   if (!user) {
     return { response: NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 }) };
@@ -86,6 +92,12 @@ export async function requireAdmin(minimum: AdminRole = "editor"): Promise<{ use
     return { response: NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 }) };
   }
   return { user };
+}
+
+export function assertCsrf(request: Request, csrfToken: string): string | null {
+  const header = request.headers.get("x-csrf-token")?.trim() || "";
+  if (!csrfToken || !header || header !== csrfToken) return "Invalid CSRF token";
+  return null;
 }
 
 export async function authenticateAdmin(email: string, password: string) {

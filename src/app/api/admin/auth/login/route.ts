@@ -31,10 +31,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid credentials" }, { status: 401, headers: rateLimitHeaders(rl) });
   }
 
-  const { token, expiresAt } = await createAdminSession(user.id, remember, { ip, userAgent: request.headers.get("user-agent") });
+  const { token, csrfToken, expiresAt } = await createAdminSession(user.id, remember, { ip, userAgent: request.headers.get("user-agent") });
   await addAuditLog({ actorId: user.id, actorEmail: user.email, action: "admin.login", ip });
 
-  const res = NextResponse.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, { headers: rateLimitHeaders(rl) });
+  const res = NextResponse.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, role: user.role, csrfToken } }, { headers: rateLimitHeaders(rl) });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
   return res;
 }

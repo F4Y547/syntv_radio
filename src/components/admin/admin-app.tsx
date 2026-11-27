@@ -3,13 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 
 type Role = "owner" | "administrator" | "editor";
-interface User { id: string; email: string; name: string | null; role: Role }
+interface User { id: string; email: string; name: string | null; role: Role; csrfToken?: string }
 type Tab = "overview" | "stations" | "countries" | "genres" | "contacts" | "stream-health" | "seo" | "ads" | "audit" | "users" | "listeners";
 
 interface ApiResult<T = unknown> { res: Response; json: T | null }
 
-async function api<T = Record<string, unknown>>(path: string, init?: RequestInit): Promise<ApiResult<T>> {
-  const res = await fetch(path, { ...init, credentials: "include", headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
+async function api<T = Record<string, unknown>>(path: string, init?: RequestInit, csrfToken?: string): Promise<ApiResult<T>> {
+  const method = (init?.method || "GET").toUpperCase();
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...((init?.headers as Record<string, string>) || {}) };
+  const token = csrfToken ?? _csrfToken;
+  if (token && !["GET","HEAD","OPTIONS"].includes(method)) headers["x-csrf-token"] = token;
+  const res = await fetch(path, { ...init, credentials: "include", headers });
   const text = await res.text();
   let json: T | null = null;
   try { json = text ? (JSON.parse(text) as T) : null; } catch { json = { ok: false, error: text } as T; }
@@ -23,8 +27,11 @@ const inputCls = "w-full rounded-lg border border-border bg-background/60 px-3 p
 const btnCls = "rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50";
 const btn2Cls = "rounded-lg border border-border px-3 py-2 text-sm text-foreground-muted hover:text-foreground disabled:opacity-50";
 
+let _csrfToken = "";
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
+  const [csrfToken, setCsrfTokenState] = useState<string>("");
+  const setCsrfToken = (t: string) => { _csrfToken = t; setCsrfTokenState(t); };
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("overview");
   const [error] = useState<string | null>(null);
@@ -33,15 +40,15 @@ export function AdminApp() {
     setLoading(true);
     try {
       const { res, json } = await api<{ ok?: boolean; user?: User }>("/api/admin/auth/me", { method: "GET" });
-      if (res.ok && json?.ok && json.user) setUser(json.user);
-      else setUser(null);
+      if (res.ok && json?.ok && json.user) { setUser(json.user); setCsrfToken(json.user.csrfToken || ""); }
+      else { setUser(null); setCsrfToken(""); }
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { (async () => { await refreshMe(); })(); }, [refreshMe]);
 
   if (loading) return <div className="p-8 text-sm text-muted-foreground">Loading admin...</div>;
-  if (!user) return <Login onAuthed={(u) => setUser(u)} />;
+  if (!user) return <Login onAuthed={(u) => { setUser(u); setCsrfToken(u.csrfToken || ""); }} />;
 
   const tabs: { id: Tab; label: string; min?: Role }[] = [
     { id: "overview", label: "Overview" },
@@ -68,7 +75,7 @@ export function AdminApp() {
             <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground">SYNTV RADIO Admin</h1>
             <p className="mt-2 text-sm text-foreground-muted">Signed in as {user.email} ({user.role}).</p>
           </div>
-          <button type="button" className={btn2Cls} onClick={async () => { await api("/api/admin/auth/logout", { method: "POST" }); setUser(null); }}>Logout</button>
+          <button type="button" className={btn2Cls} onClick={async () => { await api("/api/admin/auth/logout", { method: "POST" }, csrfToken); setUser(null); setCsrfToken(""); }}>Logout</button>
         </div>
         {error && <div className="mt-4 rounded-xl border border-error/30 bg-error-soft p-3 text-sm text-error">{error}</div>}
       </header>

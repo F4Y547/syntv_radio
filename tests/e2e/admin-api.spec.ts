@@ -40,6 +40,30 @@ test.describe("admin API guards", () => {
     expect([401, 403, 503]).toContain(res.status());
   });
 
+  test("mutating admin endpoints reject missing CSRF/auth", async ({ request }) => {
+    const res = await request.post("/api/admin/stations", {
+      data: { name: "X", streamUrl: "https://example.com/stream" },
+    });
+    // Without a valid same-origin session + CSRF token, mutation must not succeed.
+    expect([401, 403, 503]).toContain(res.status());
+    const json = await res.json();
+    expect(json.ok).toBe(false);
+  });
+
+  test("admin logout requires same-origin and does not create side effects for anonymous callers", async ({ request }) => {
+    const res = await request.post("/api/admin/auth/logout", {
+      headers: { origin: "https://evil.example" },
+    });
+    expect([401, 403]).toContain(res.status());
+  });
+
+  test("admin user disable endpoint requires owner auth/db", async ({ request }) => {
+    const res = await request.patch("/api/admin/users/some-id", {
+      data: { active: false },
+    });
+    expect([401, 403, 503]).toContain(res.status());
+  });
+
   test("legacy station-overrides endpoint requires auth/db", async ({ request }) => {
     const res = await request.get("/api/admin/station-overrides");
     expect([401, 503]).toContain(res.status());
